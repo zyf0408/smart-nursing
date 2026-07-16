@@ -49,13 +49,16 @@
         },
         "publicPath" : "/m/",
         "devServer" : {
-            "port" : 5173,
+            "port" : 5174,
             "https" : false,
             "proxy" : {
                 "/api" : {
                     "target" : "http://localhost:8888",
                     "changeOrigin" : true,
-                    "secure" : false
+                    "secure" : false,
+                    "pathRewrite" : {
+                        "^/api" : ""
+                    }
                 }
             }
         }

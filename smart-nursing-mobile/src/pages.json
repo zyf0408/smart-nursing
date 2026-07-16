@@ -1,0 +1,140 @@
+{
+    "easycom": {
+        "autoscan": true,
+        "custom": {
+            "^uni-(.*)": "@dcloudio/uni-ui/lib/uni-$1/uni-$1.vue",
+            "^mp-html$": "@/uni_modules/mp-html/components/mp-html/mp-html.vue"
+        }
+    },
+    "pages": [
+        {
+            "path": "pages/login/login",
+            "style": {
+                "navigationBarTitleText": "登录",
+                "navigationStyle": "custom"
+            }
+        },
+        {
+            "path": "pages/learn/index",
+            "style": {
+                "navigationBarTitleText": "学习中心",
+                "enablePullDownRefresh": true,
+                "backgroundTextStyle": "dark"
+            }
+        },
+        {
+            "path": "pages/exam/index",
+            "style": {
+                "navigationBarTitleText": "考试中心",
+                "enablePullDownRefresh": true
+            }
+        },
+        {
+            "path": "pages/user/index",
+            "style": {
+                "navigationBarTitleText": "个人中心",
+                "navigationStyle": "custom"
+            }
+        },
+        {
+            "path": "pages/learn/article-detail",
+            "style": {
+                "navigationBarTitleText": "文章详情"
+            }
+        },
+        {
+            "path": "pages/learn/video-detail",
+            "style": {
+                "navigationBarTitleText": "视频学习"
+            }
+        },
+        {
+            "path": "pages/learn/ppt-detail",
+            "style": {
+                "navigationBarTitleText": "课件详情"
+            }
+        },
+        {
+            "path": "pages/exam/exam-detail",
+            "style": {
+                "navigationBarTitleText": "考试详情"
+            }
+        },
+        {
+            "path": "pages/exam/exam-paper",
+            "style": {
+                "navigationBarTitleText": "答题中",
+                "disableScroll": false,
+                "navigationStyle": "custom"
+            }
+        },
+        {
+            "path": "pages/exam/exam-result",
+            "style": {
+                "navigationBarTitleText": "考试结果"
+            }
+        },
+        {
+            "path": "pages/user/favorite",
+            "style": {
+                "navigationBarTitleText": "我的收藏"
+            }
+        },
+        {
+            "path": "pages/user/learning-record",
+            "style": {
+                "navigationBarTitleText": "学习记录"
+            }
+        },
+        {
+            "path": "pages/user/exam-record",
+            "style": {
+                "navigationBarTitleText": "考试记录"
+            }
+        },
+        {
+            "path": "pages/user/change-password",
+            "style": {
+                "navigationBarTitleText": "修改密码"
+            }
+        },
+        {
+            "path": "pages/user/profile",
+            "style": {
+                "navigationBarTitleText": "个人信息"
+            }
+        }
+    ],
+    "globalStyle": {
+        "navigationBarTextStyle": "white",
+        "navigationBarTitleText": "智慧护理",
+        "navigationBarBackgroundColor": "#2979ff",
+        "backgroundColor": "#F8F8F8"
+    },
+    "tabBar": {
+        "color": "#7A7E83",
+        "selectedColor": "#2979ff",
+        "borderStyle": "black",
+        "backgroundColor": "#ffffff",
+        "list": [
+            {
+                "pagePath": "pages/learn/index",
+                "iconPath": "static/tabbar/learn.png",
+                "selectedIconPath": "static/tabbar/learn-active.png",
+                "text": "学习中心"
+            },
+            {
+                "pagePath": "pages/exam/index",
+                "iconPath": "static/tabbar/exam.png",
+                "selectedIconPath": "static/tabbar/exam-active.png",
+                "text": "考试中心"
+            },
+            {
+                "pagePath": "pages/user/index",
+                "iconPath": "static/tabbar/user.png",
+                "selectedIconPath": "static/tabbar/user-active.png",
+                "text": "个人中心"
+            }
+        ]
+    }
+}

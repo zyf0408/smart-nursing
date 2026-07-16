@@ -6,6 +6,7 @@ import lombok.Data;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 视频详情 VO
@@ -89,4 +90,14 @@ public class VideoVo implements Serializable {
      * 标签列表
      */
     private List<TagEntity> tagList;
+
+    /**
+     * 是否已收藏
+     */
+    private Boolean isFavorited;
+
+    /**
+     * 学习进度
+     */
+    private Map<String, Object> progress;
 }

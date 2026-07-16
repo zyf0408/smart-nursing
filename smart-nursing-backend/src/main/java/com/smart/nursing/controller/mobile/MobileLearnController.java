@@ -5,6 +5,7 @@ import com.smart.nursing.aop.LoginUser;
 import com.smart.nursing.common.result.CommonResult;
 import com.smart.nursing.entity.ArticleEntity;
 import com.smart.nursing.entity.FavoriteEntity;
+import com.smart.nursing.entity.LearningRecordEntity;
 import com.smart.nursing.entity.PptEntity;
 import com.smart.nursing.entity.VideoEntity;
 import com.smart.nursing.service.IArticleService;
@@ -116,16 +117,54 @@ public class MobileLearnController {
     @Operation(summary = "内容详情")
     @GetMapping("/detail/{contentType}/{contentId}")
     public CommonResult<Object> detail(@PathVariable Integer contentType,
-                                       @PathVariable Long contentId) {
+                                       @PathVariable Long contentId,
+                                       HttpServletRequest request) {
+        LoginUser loginUser = (LoginUser) request.getAttribute("loginUser");
+        // 查询当前用户是否已收藏此内容
+        boolean isFavorited = favoriteService.isFavorite(loginUser.getUserId(), contentType, contentId);
+        // 查询学习进度
+        LearningRecordEntity record = learningService.getOne(
+                new LambdaQueryWrapper<LearningRecordEntity>()
+                        .eq(LearningRecordEntity::getUserId, loginUser.getUserId())
+                        .eq(LearningRecordEntity::getContentType, contentType)
+                        .eq(LearningRecordEntity::getContentId, contentId)
+                        .orderByDesc(LearningRecordEntity::getLastStudyTime)
+                        .last("LIMIT 1")
+        );
+        Map<String, Object> progressMap = null;
+        if (record != null) {
+            progressMap = new HashMap<>();
+            progressMap.put("percent", record.getProgress());
+            progressMap.put("duration", record.getStudyDuration());
+        }
+
         switch (contentType) {
             case 1:
                 ArticleVo articleVo = articleService.getArticleById(contentId);
+                if (articleVo != null) {
+                    articleVo.setIsFavorited(isFavorited);
+                    if (progressMap != null) {
+                        articleVo.setProgress(progressMap);
+                    }
+                }
                 return CommonResult.success(articleVo);
             case 2:
                 VideoVo videoVo = videoService.getVideoById(contentId);
+                if (videoVo != null) {
+                    videoVo.setIsFavorited(isFavorited);
+                    if (progressMap != null) {
+                        videoVo.setProgress(progressMap);
+                    }
+                }
                 return CommonResult.success(videoVo);
             case 3:
                 PptVo pptVo = pptService.getPptById(contentId);
+                if (pptVo != null) {
+                    pptVo.setIsFavorited(isFavorited);
+                    if (progressMap != null) {
+                        pptVo.setProgress(progressMap);
+                    }
+                }
                 return CommonResult.success(pptVo);
             default:
                 return CommonResult.success(null);
@@ -172,9 +211,45 @@ public class MobileLearnController {
 
     @Operation(summary = "我的收藏列表")
     @GetMapping("/favorite/list")
-    public CommonResult<List<FavoriteEntity>> favoriteList(HttpServletRequest request) {
+    public CommonResult<List<Map<String, Object>>> favoriteList(HttpServletRequest request) {
         LoginUser loginUser = (LoginUser) request.getAttribute("loginUser");
-        return CommonResult.success(favoriteService.getFavoriteList(loginUser.getUserId()));
+        List<FavoriteEntity> favorites = favoriteService.getFavoriteList(loginUser.getUserId());
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (FavoriteEntity f : favorites) {
+            Map<String, Object> item = new HashMap<>();
+            item.put("favoriteId", f.getFavoriteId());
+            item.put("contentType", f.getContentType());
+            item.put("contentId", f.getContentId());
+            item.put("favoriteTime", f.getCreateTime());
+            // 关联查询内容标题
+            String title = getContentTitle(f.getContentType(), f.getContentId());
+            item.put("title", title);
+            result.add(item);
+        }
+        return CommonResult.success(result);
+    }
+
+    /**
+     * 根据内容类型和ID查询标题
+     */
+    private String getContentTitle(Integer contentType, Long contentId) {
+        try {
+            switch (contentType) {
+                case 1:
+                    ArticleEntity article = articleService.getById(contentId);
+                    return article != null ? article.getTitle() : "内容已删除";
+                case 2:
+                    VideoEntity video = videoService.getById(contentId);
+                    return video != null ? video.getTitle() : "内容已删除";
+                case 3:
+                    PptEntity ppt = pptService.getById(contentId);
+                    return ppt != null ? ppt.getTitle() : "内容已删除";
+                default:
+                    return "未知内容";
+            }
+        } catch (Exception e) {
+            return "内容已删除";
+        }
     }
 
     /**

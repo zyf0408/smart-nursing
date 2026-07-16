@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @Tag(name = "登录管理", description = "用户登录与退出")
 @RestController
-@RequestMapping("")
 @RequiredArgsConstructor
 public class LoginController {
 
