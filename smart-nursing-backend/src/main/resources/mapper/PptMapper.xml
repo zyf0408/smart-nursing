@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.smart.nursing.dao.PptMapper">
+
+    <!-- 课件分页查询：支持标题模糊查询 + 分类筛选 + 状态筛选 -->
+    <select id="selectPptPage" resultType="com.smart.nursing.entity.PptEntity">
+        SELECT p.*
+        FROM nursing_ppt p
+        WHERE p.is_delete = 0
+        <if test="dto.title != null and dto.title != ''">
+            AND p.title LIKE CONCAT('%', #{dto.title}, '%')
+        </if>
+        <if test="dto.categoryId != null">
+            AND p.category_id = #{dto.categoryId}
+        </if>
+        <if test="dto.status != null">
+            AND p.status = #{dto.status}
+        </if>
+        ORDER BY p.sort_order ASC, p.create_time DESC
+    </select>
+
+</mapper>

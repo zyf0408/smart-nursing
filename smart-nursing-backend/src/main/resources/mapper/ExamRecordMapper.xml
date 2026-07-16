@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.smart.nursing.dao.ExamRecordMapper">
+
+    <!-- 考试记录分页查询：关联用户名与考试名 -->
+    <select id="selectRecordPage" resultType="com.smart.nursing.entity.ExamRecordEntity">
+        SELECT r.*
+        FROM nursing_exam_record r
+        LEFT JOIN sys_user u ON r.user_id = u.user_id AND u.is_delete = 0
+        LEFT JOIN nursing_exam e ON r.exam_id = e.exam_id AND e.is_delete = 0
+        WHERE 1 = 1
+        <if test="dto.examId != null">
+            AND r.exam_id = #{dto.examId}
+        </if>
+        <if test="dto.userId != null">
+            AND r.user_id = #{dto.userId}
+        </if>
+        <if test="dto.username != null and dto.username != ''">
+            AND (u.real_name LIKE CONCAT('%', #{dto.username}, '%')
+                 OR u.username LIKE CONCAT('%', #{dto.username}, '%'))
+        </if>
+        <if test="dto.isPass != null">
+            AND r.is_pass = #{dto.isPass}
+        </if>
+        ORDER BY r.create_time DESC
+    </select>
+
+</mapper>

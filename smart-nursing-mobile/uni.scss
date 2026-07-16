@@ -1,0 +1,59 @@
+/**
+ * uni.scss
+ * uni-app 内置的 css 变量
+ * 在所有 uni-app 页面中可用，无需 import
+ */
+
+/* ========================
+ * 颜色变量
+ * ======================== */
+
+/* 主色 */
+$uni-color-primary: #2979ff;
+$uni-color-primary-dark: #1565c0;
+$uni-color-primary-light: #e3f2fd;
+
+/* 辅助色 */
+$uni-color-success: #4caf50;
+$uni-color-warning: #ff9800;
+$uni-color-error: #f44336;
+$uni-color-info: #2196f3;
+
+/* 中性色 */
+$uni-text-color: #333;
+$uni-text-color-inverse: #fff;
+$uni-text-color-grey: #999;
+$uni-text-color-placeholder: #ccc;
+$uni-bg-color: #ffffff;
+$uni-bg-color-grey: #f5f5f5;
+$uni-border-color: #e0e0e0;
+
+/* ========================
+ * 尺寸变量
+ * ======================== */
+
+$uni-font-size-sm: 24rpx;
+$uni-font-size-base: 28rpx;
+$uni-font-size-lg: 32rpx;
+$uni-font-size-xl: 36rpx;
+
+$uni-spacing-row-sm: 10rpx;
+$uni-spacing-row-base: 20rpx;
+$uni-spacing-row-lg: 30rpx;
+
+$uni-spacing-col-sm: 8rpx;
+$uni-spacing-col-base: 16rpx;
+$uni-spacing-col-lg: 24rpx;
+
+$uni-border-radius-sm: 4rpx;
+$uni-border-radius-base: 8rpx;
+$uni-border-radius-lg: 16rpx;
+$uni-border-radius-circle: 50%;
+
+/* ========================
+ * 页面尺寸
+ * ======================== */
+
+$uni-page-padding: 24rpx;
+$uni-card-padding: 28rpx;
+$uni-tabbar-height: 100rpx;

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.smart.nursing.dao.VideoMapper">
+
+    <!-- 视频分页查询：支持标题模糊查询 + 分类筛选 + 状态筛选 -->
+    <select id="selectVideoPage" resultType="com.smart.nursing.entity.VideoEntity">
+        SELECT v.*
+        FROM nursing_video v
+        WHERE v.is_delete = 0
+        <if test="dto.title != null and dto.title != ''">
+            AND v.title LIKE CONCAT('%', #{dto.title}, '%')
+        </if>
+        <if test="dto.categoryId != null">
+            AND v.category_id = #{dto.categoryId}
+        </if>
+        <if test="dto.status != null">
+            AND v.status = #{dto.status}
+        </if>
+        ORDER BY v.sort_order ASC, v.create_time DESC
+    </select>
+
+</mapper>

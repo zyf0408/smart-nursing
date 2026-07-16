@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.smart.nursing.dao.ArticleMapper">
+
+    <!-- 文章分页查询：支持标题模糊查询 + 分类筛选 + 状态筛选 -->
+    <select id="selectArticlePage" resultType="com.smart.nursing.entity.ArticleEntity">
+        SELECT a.*
+        FROM nursing_article a
+        WHERE a.is_delete = 0
+        <if test="dto.title != null and dto.title != ''">
+            AND a.title LIKE CONCAT('%', #{dto.title}, '%')
+        </if>
+        <if test="dto.categoryId != null">
+            AND a.category_id = #{dto.categoryId}
+        </if>
+        <if test="dto.status != null">
+            AND a.status = #{dto.status}
+        </if>
+        ORDER BY a.sort_order ASC, a.create_time DESC
+    </select>
+
+</mapper>

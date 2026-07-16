@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" scanPeriod="60 seconds">
+
+    <!-- 日志输出格式：[%p]%d - %msg%n -->
+    <property name="LOG_PATTERN" value="[%p]%d{yyyy-MM-dd HH:mm:ss.SSS} - %msg%n"/>
+    <property name="LOG_PATH" value="logs"/>
+    <property name="APP_NAME" value="smart-nursing"/>
+    <property name="MAX_HISTORY" value="30"/>
+
+    <!-- 控制台输出 -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- 文件输出（按天滚动） -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/${APP_NAME}.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- 按天滚动归档 -->
+            <fileNamePattern>${LOG_PATH}/${APP_NAME}-%d{yyyy-MM-dd}.log</fileNamePattern>
+            <!-- 日志文件保留天数 -->
+            <maxHistory>${MAX_HISTORY}</maxHistory>
+            <!-- 日志文件总大小上限 -->
+            <totalSizeCap>10GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- ========== 开发环境：DEBUG 级别，控制台 + 文件输出 ========== -->
+    <springProfile name="dev,default">
+        <logger name="com.smart.nursing" level="DEBUG"/>
+        <root level="DEBUG">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="FILE"/>
+        </root>
+    </springProfile>
+
+    <!-- ========== 生产环境：INFO 级别，文件按天滚动 ========== -->
+    <springProfile name="prod">
+        <logger name="com.smart.nursing" level="INFO"/>
+        <root level="INFO">
+            <appender-ref ref="FILE"/>
+        </root>
+    </springProfile>
+
+</configuration>
