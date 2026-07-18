@@ -86,7 +86,7 @@
         ref="menuTreeRef"
         :data="menuTreeData"
         :props="{ label: 'title', children: 'children' }"
-        node-key="id"
+        node-key="menuId"
         show-checkbox
         default-expand-all
         :default-checked-keys="checkedMenuIds"
@@ -149,7 +149,7 @@ const dialogVisible = ref(false)
 const dialogTitle = ref('新增角色')
 const formRef = ref()
 const form = reactive({
-  id: null,
+  roleId: null,
   roleName: '',
   roleCode: '',
   description: '',
@@ -163,7 +163,7 @@ const rules = {
 
 const handleAdd = () => {
   dialogTitle.value = '新增角色'
-  Object.assign(form, { id: null, roleName: '', roleCode: '', description: '', status: 1 })
+  Object.assign(form, { roleId: null, roleName: '', roleCode: '', description: '', status: 1 })
   dialogVisible.value = true
 }
 
@@ -177,10 +177,10 @@ const handleSubmit = () => {
   formRef.value.validate((valid) => {
     if (!valid) return
     submitLoading.value = true
-    const api = form.id ? roleUpdate(form) : roleAdd(form)
+    const api = form.roleId ? roleUpdate(form) : roleAdd(form)
     api
       .then(() => {
-        ElMessage.success(form.id ? '修改成功' : '新增成功')
+        ElMessage.success(form.roleId ? '修改成功' : '新增成功')
         dialogVisible.value = false
         loadData()
       })
@@ -200,7 +200,7 @@ const handleDelete = (row) => {
     type: 'warning'
   })
     .then(() => {
-      roleDelete(row.id)
+      roleDelete(row.roleId)
         .then(() => {
           ElMessage.success('删除成功')
           loadData()
@@ -224,12 +224,12 @@ const checkedMenuIds = ref([])
 const currentRoleId = ref(null)
 
 const handleAssignMenus = (row) => {
-  currentRoleId.value = row.id
+  currentRoleId.value = row.roleId
   checkedMenuIds.value = []
   menuTree()
     .then((menuRes) => {
       menuTreeData.value = menuRes || []
-      return getRoleMenus(row.id)
+      return getRoleMenus(row.roleId)
     })
     .then((roleMenusRes) => {
       checkedMenuIds.value = roleMenusRes || []

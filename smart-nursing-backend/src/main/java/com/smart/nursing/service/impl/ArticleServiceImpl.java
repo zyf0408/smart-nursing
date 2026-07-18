@@ -122,6 +122,17 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, ArticleEntity
                 .eq(ArticleTagEntity::getArticleId, articleId));
     }
 
+    @Override
+    public void publishArticle(Long articleId) {
+        ArticleEntity article = this.getById(articleId);
+        if (article != null) {
+            // 切换发布状态：已上架(1)→下架(0)，下架(0)→上架(1)
+            Integer currentStatus = article.getStatus();
+            article.setStatus(currentStatus != null && currentStatus == 1 ? 0 : 1);
+            this.updateById(article);
+        }
+    }
+
     /**
      * 保存文章-标签关联
      */

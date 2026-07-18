@@ -65,4 +65,11 @@ public interface IUserService extends IService<UserEntity> {
      * @param roleIds 角色ID集合
      */
     void assignRoles(Long userId, List<Long> roleIds);
+
+    /**
+     * 重置用户密码
+     *
+     * @param userId 用户ID
+     */
+    void resetPassword(Long userId);
 }

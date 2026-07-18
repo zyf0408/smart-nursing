@@ -1,9 +1,9 @@
 import request from '@/utils/request'
 
-// 类别树
+// 类别树（公共接口，无需鉴权）
 export function categoryTree() {
   return request({
-    url: '/category/tree',
+    url: '/common/category/tree',
     method: 'get'
   })
 }
@@ -11,7 +11,7 @@ export function categoryTree() {
 // 新增类别
 export function categoryAdd(data) {
   return request({
-    url: '/category',
+    url: '/admin/category/add',
     method: 'post',
     data
   })
@@ -20,8 +20,8 @@ export function categoryAdd(data) {
 // 修改类别
 export function categoryUpdate(data) {
   return request({
-    url: '/category',
-    method: 'put',
+    url: '/admin/category/update',
+    method: 'post',
     data
   })
 }
@@ -29,7 +29,7 @@ export function categoryUpdate(data) {
 // 删除类别
 export function categoryDelete(id) {
   return request({
-    url: `/category/${id}`,
-    method: 'delete'
+    url: `/admin/category/delete/${id}`,
+    method: 'post'
   })
 }

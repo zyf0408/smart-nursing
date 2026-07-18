@@ -39,4 +39,9 @@ public class ExamRecordDto extends PageParam implements Serializable {
      * 是否及格
      */
     private Integer isPass;
+
+    /**
+     * 考试名称（用于模糊查询）
+     */
+    private String examName;
 }

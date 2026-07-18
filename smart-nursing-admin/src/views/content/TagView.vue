@@ -105,7 +105,7 @@ const dialogVisible = ref(false)
 const dialogTitle = ref('新增标签')
 const formRef = ref()
 const form = reactive({
-  id: null,
+  tagId: null,
   tagName: ''
 })
 
@@ -115,7 +115,7 @@ const rules = {
 
 const handleAdd = () => {
   dialogTitle.value = '新增标签'
-  Object.assign(form, { id: null, tagName: '' })
+  Object.assign(form, { tagId: null, tagName: '' })
   dialogVisible.value = true
 }
 
@@ -129,10 +129,10 @@ const handleSubmit = () => {
   formRef.value.validate((valid) => {
     if (!valid) return
     submitLoading.value = true
-    const api = form.id ? tagUpdate(form) : tagAdd(form)
+    const api = form.tagId ? tagUpdate(form) : tagAdd(form)
     api
       .then(() => {
-        ElMessage.success(form.id ? '修改成功' : '新增成功')
+        ElMessage.success(form.tagId ? '修改成功' : '新增成功')
         dialogVisible.value = false
         loadData()
       })
@@ -152,7 +152,7 @@ const handleDelete = (row) => {
     type: 'warning'
   })
     .then(() => {
-      tagDelete(row.id)
+      tagDelete(row.tagId)
         .then(() => {
           ElMessage.success('删除成功')
           loadData()

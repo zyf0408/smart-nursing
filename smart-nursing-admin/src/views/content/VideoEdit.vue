@@ -17,7 +17,7 @@
           <el-tree-select
             v-model="form.categoryId"
             :data="categoryOptions"
-            :props="{ label: 'name', value: 'id', children: 'children' }"
+            :props="{ label: 'categoryName', value: 'categoryId', children: 'children' }"
             check-strictly
             default-expand-all
             placeholder="请选择类别"
@@ -67,7 +67,7 @@ const categoryOptions = ref([])
 const isEdit = computed(() => !!route.query.id)
 
 const form = reactive({
-  id: null,
+  videoId: null,
   title: '',
   categoryId: '',
   coverImage: '',
@@ -106,10 +106,10 @@ const handleSubmit = () => {
   formRef.value.validate((valid) => {
     if (!valid) return
     submitLoading.value = true
-    const api = form.id ? videoUpdate(form) : videoAdd(form)
+    const api = form.videoId ? videoUpdate(form) : videoAdd(form)
     api
       .then(() => {
-        ElMessage.success(form.id ? '修改成功' : '新增成功')
+        ElMessage.success(form.videoId ? '修改成功' : '新增成功')
         router.push('/content/video')
       })
       .catch((err) => {

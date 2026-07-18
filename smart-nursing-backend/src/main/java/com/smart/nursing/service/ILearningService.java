@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.smart.nursing.dto.LearningRecordDto;
 import com.smart.nursing.entity.LearningRecordEntity;
 import com.smart.nursing.vo.LearningProgressVo;
+import com.smart.nursing.vo.LearningRecordVo;
 
 /**
  * 学习记录 Service 接口
@@ -36,5 +37,5 @@ public interface ILearningService extends IService<LearningRecordEntity> {
      * @param dto 查询条件
      * @return 分页结果
      */
-    IPage<LearningRecordEntity> listLearningRecords(LearningRecordDto dto);
+    IPage<LearningRecordVo> listLearningRecords(LearningRecordDto dto);
 }

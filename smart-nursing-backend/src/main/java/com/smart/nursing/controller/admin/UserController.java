@@ -67,4 +67,12 @@ public class UserController {
         userService.assignRoles(userId, roleIds);
         return CommonResult.success();
     }
+
+    @RecordLog("重置密码")
+    @Operation(summary = "重置用户密码")
+    @PostMapping("/resetPassword")
+    public CommonResult<Void> resetPassword(@RequestParam Long userId) {
+        userService.resetPassword(userId);
+        return CommonResult.success();
+    }
 }

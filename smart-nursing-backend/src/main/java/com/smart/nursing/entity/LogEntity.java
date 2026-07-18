@@ -48,6 +48,11 @@ public class LogEntity implements Serializable {
     private String method;
 
     /**
+     * 请求地址
+     */
+    private String url;
+
+    /**
      * 请求参数
      */
     private String params;
@@ -56,6 +61,11 @@ public class LogEntity implements Serializable {
      * 请求IP
      */
     private String ip;
+
+    /**
+     * 耗时（ms）
+     */
+    private Long costTime;
 
     /**
      * 日志类型

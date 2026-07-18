@@ -17,7 +17,7 @@
           <el-tree-select
             v-model="form.categoryId"
             :data="categoryOptions"
-            :props="{ label: 'name', value: 'id', children: 'children' }"
+            :props="{ label: 'categoryName', value: 'categoryId', children: 'children' }"
             check-strictly
             default-expand-all
             placeholder="请选择类别"
@@ -35,9 +35,9 @@
           <el-select v-model="form.tagIds" multiple filterable placeholder="请选择标签" style="width: 100%">
             <el-option
               v-for="tag in tagOptions"
-              :key="tag.id"
+              :key="tag.tagId"
               :label="tag.tagName"
-              :value="tag.id"
+              :value="tag.tagId"
             />
           </el-select>
         </el-form-item>
@@ -88,7 +88,7 @@ const tagOptions = ref([])
 const isEdit = computed(() => !!route.query.id)
 
 const form = reactive({
-  id: null,
+  articleId: null,
   title: '',
   categoryId: '',
   summary: '',
@@ -151,10 +151,10 @@ const handleSubmit = () => {
   formRef.value.validate((valid) => {
     if (!valid) return
     submitLoading.value = true
-    const api = form.id ? articleUpdate(form) : articleAdd(form)
+    const api = form.articleId ? articleUpdate(form) : articleAdd(form)
     api
       .then(() => {
-        ElMessage.success(form.id ? '修改成功' : '新增成功')
+        ElMessage.success(form.articleId ? '修改成功' : '新增成功')
         router.push('/content/article')
       })
       .catch((err) => {

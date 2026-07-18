@@ -128,7 +128,11 @@ const loadData = () => {
       statCards[2].value = res.videoCount || 0
       statCards[3].value = res.examCount || 0
       nextTick(() => {
-        initPieChart(res.categoryDistribution || [])
+        const pieData = (res.categoryContentCounts || []).map(item => ({
+          value: item.totalCount || 0,
+          name: item.categoryName || '未知'
+        }))
+        initPieChart(pieData)
         initLineChart(res.learningTrend || [])
       })
     })

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.smart.nursing.dao.LearningRecordMapper">
+
+    <!-- 学习记录分页查询：关联用户名与内容标题 -->
+    <select id="selectRecordPage" resultType="com.smart.nursing.vo.LearningRecordVo">
+        SELECT
+            r.record_id,
+            r.user_id,
+            r.content_type,
+            r.content_id,
+            r.progress,
+            r.study_duration,
+            r.last_study_time,
+            r.is_completed,
+            r.version,
+            COALESCE(u.real_name, u.username) AS username,
+            CASE r.content_type
+                WHEN 1 THEN a.title
+                WHEN 2 THEN v.title
+                WHEN 3 THEN p.title
+            END AS content_title,
+            ROUND(r.study_duration / 60) AS duration,
+            r.last_study_time AS create_time
+        FROM nursing_learning_record r
+        LEFT JOIN sys_user u ON r.user_id = u.user_id AND u.is_delete = 0
+        LEFT JOIN nursing_article a ON r.content_type = 1 AND r.content_id = a.article_id AND a.is_delete = 0
+        LEFT JOIN nursing_video v ON r.content_type = 2 AND r.content_id = v.video_id AND v.is_delete = 0
+        LEFT JOIN nursing_ppt p ON r.content_type = 3 AND r.content_id = p.ppt_id AND p.is_delete = 0
+        <where>
+            <if test="dto.username != null and dto.username != ''">
+                AND (u.username LIKE CONCAT('%', #{dto.username}, '%')
+                     OR u.real_name LIKE CONCAT('%', #{dto.username}, '%'))
+            </if>
+            <if test="dto.contentType != null">
+                AND r.content_type = #{dto.contentType}
+            </if>
+            <if test="dto.userId != null">
+                AND r.user_id = #{dto.userId}
+            </if>
+            <if test="dto.contentId != null">
+                AND r.content_id = #{dto.contentId}
+            </if>
+        </where>
+        ORDER BY r.last_study_time DESC
+    </select>
+
+</mapper>

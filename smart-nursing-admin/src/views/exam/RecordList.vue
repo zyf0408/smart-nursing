@@ -11,7 +11,7 @@
           @keyup.enter="handleSearch"
         />
         <el-input
-          v-model="queryParams.examTitle"
+          v-model="queryParams.examName"
           placeholder="考试名称"
           clearable
           style="width: 180px"
@@ -25,7 +25,7 @@
       <el-table v-loading="loading" :data="tableData" border stripe>
         <el-table-column type="index" label="#" width="50" align="center" />
         <el-table-column prop="username" label="考生姓名" min-width="120" />
-        <el-table-column prop="examTitle" label="考试名称" min-width="200" show-overflow-tooltip />
+        <el-table-column prop="examName" label="考试名称" min-width="200" show-overflow-tooltip />
         <el-table-column prop="score" label="得分" width="80" align="center">
           <template #default="{ row }">
             <span :style="{ color: row.score >= row.passScore ? '#67c23a' : '#f56c6c', fontWeight: 'bold' }">
@@ -83,7 +83,7 @@ const queryParams = reactive({
   pageNum: 1,
   pageSize: 10,
   username: '',
-  examTitle: ''
+  examName: ''
 })
 
 const loadData = () => {
@@ -108,13 +108,13 @@ const handleSearch = () => {
 
 const handleReset = () => {
   queryParams.username = ''
-  queryParams.examTitle = ''
+  queryParams.examName = ''
   queryParams.pageNum = 1
   loadData()
 }
 
 const handleDetail = (row) => {
-  router.push(`/exam/record/detail?id=${row.id}`)
+  router.push(`/examRecord/detail?recordId=${row.recordId}`)
 }
 
 loadData()

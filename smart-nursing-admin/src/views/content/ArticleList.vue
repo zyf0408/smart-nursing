@@ -13,9 +13,9 @@
         <el-select v-model="queryParams.categoryId" placeholder="类别" clearable style="width: 180px">
           <el-option
             v-for="item in categoryOptions"
-            :key="item.id"
-            :label="item.name"
-            :value="item.id"
+            :key="item.categoryId"
+            :label="item.categoryName"
+            :value="item.categoryId"
           />
         </el-select>
         <el-button type="primary" :icon="Search" @click="handleSearch">搜索</el-button>
@@ -87,7 +87,7 @@ const queryParams = reactive({
 // 扁平化类别树
 const flattenCategory = (tree, result = []) => {
   tree.forEach((item) => {
-    result.push({ id: item.id, name: item.name })
+    result.push({ categoryId: item.categoryId, categoryName: item.categoryName })
     if (item.children && item.children.length > 0) {
       flattenCategory(item.children, result)
     }
@@ -137,7 +137,7 @@ const handleAdd = () => {
 }
 
 const handleEdit = (row) => {
-  router.push(`/content/article/edit?id=${row.id}`)
+  router.push(`/content/article/edit?id=${row.articleId}`)
 }
 
 const handleDelete = (row) => {
@@ -147,7 +147,7 @@ const handleDelete = (row) => {
     type: 'warning'
   })
     .then(() => {
-      articleDelete(row.id)
+      articleDelete(row.articleId)
         .then(() => {
           ElMessage.success('删除成功')
           loadData()

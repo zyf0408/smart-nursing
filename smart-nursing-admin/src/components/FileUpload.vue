@@ -94,7 +94,7 @@ const emit = defineEmits(['update:modelValue', 'success', 'remove'])
 const baseURL = import.meta.env.VITE_API_BASE_URL
 const uploadUrl = computed(() => `${baseURL}${props.action.replace('/api', '')}`)
 const uploadHeaders = computed(() => ({
-  Authorization: `Bearer ${localStorage.getItem('token') || ''}`
+  token: localStorage.getItem('token') || ''
 }))
 const uploadData = ref({})
 
@@ -139,7 +139,7 @@ const handleSuccess = (response, file) => {
     }
     emit('success', response, file)
   } else {
-    ElMessage.error(response.message || '上传失败')
+    ElMessage.error(response.msg || '上传失败')
   }
 }
 

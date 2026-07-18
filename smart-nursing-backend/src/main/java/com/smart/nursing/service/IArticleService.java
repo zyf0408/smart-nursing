@@ -47,4 +47,11 @@ public interface IArticleService extends IService<ArticleEntity> {
      * @param articleId 文章ID
      */
     void deleteArticle(Long articleId);
+
+    /**
+     * 发布/下架文章
+     *
+     * @param articleId 文章ID
+     */
+    void publishArticle(Long articleId);
 }

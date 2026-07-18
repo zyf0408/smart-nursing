@@ -204,4 +204,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserEntity> impleme
             }
         }
     }
+
+    @Override
+    public void resetPassword(Long userId) {
+        UserEntity user = this.getById(userId);
+        if (user == null) {
+            throw new BusinessException(GlobalErrorCodeConstants.USER_NOT_EXIST);
+        }
+        // 重置为默认密码 123456
+        user.setPassword(SecurityUtils.encode("123456"));
+        this.updateById(user);
+    }
 }

@@ -56,4 +56,12 @@ public class ArticleController {
         articleService.deleteArticle(articleId);
         return CommonResult.success();
     }
+
+    @RecordLog("发布/下架文章")
+    @Operation(summary = "发布/下架文章")
+    @PostMapping("/publish/{articleId}")
+    public CommonResult<Void> publish(@PathVariable Long articleId) {
+        articleService.publishArticle(articleId);
+        return CommonResult.success();
+    }
 }

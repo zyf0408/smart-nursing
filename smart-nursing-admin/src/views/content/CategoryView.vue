@@ -11,20 +11,14 @@
       <el-table
         v-loading="loading"
         :data="tableData"
-        row-key="id"
+        row-key="categoryId"
         border
         default-expand-all
         :tree-props="{ children: 'children' }"
       >
-        <el-table-column prop="name" label="类别名称" min-width="200" />
-        <el-table-column prop="sort" label="排序" width="80" align="center" />
-        <el-table-column prop="status" label="状态" width="80" align="center">
-          <template #default="{ row }">
-            <el-tag :type="row.status === 1 ? 'success' : 'danger'">
-              {{ row.status === 1 ? '正常' : '禁用' }}
-            </el-tag>
-          </template>
-        </el-table-column>
+        <el-table-column prop="categoryName" label="类别名称" min-width="200" />
+        <el-table-column prop="sortOrder" label="排序" width="80" align="center" />
+        <el-table-column prop="description" label="描述" min-width="200" show-overflow-tooltip />
         <el-table-column prop="createTime" label="创建时间" min-width="160" />
         <el-table-column label="操作" width="220" fixed="right" align="center">
           <template #default="{ row }">
@@ -43,7 +37,7 @@
           <el-tree-select
             v-model="form.parentId"
             :data="categoryOptions"
-            :props="{ label: 'name', value: 'id', children: 'children' }"
+            :props="{ label: 'categoryName', value: 'categoryId', children: 'children' }"
             check-strictly
             default-expand-all
             placeholder="请选择上级类别（顶级留空）"
@@ -51,14 +45,14 @@
             style="width: 100%"
           />
         </el-form-item>
-        <el-form-item label="类别名称" prop="name">
-          <el-input v-model="form.name" placeholder="请输入类别名称" />
+        <el-form-item label="类别名称" prop="categoryName">
+          <el-input v-model="form.categoryName" placeholder="请输入类别名称" />
         </el-form-item>
-        <el-form-item label="排序" prop="sort">
-          <el-input-number v-model="form.sort" :min="0" :max="999" />
+        <el-form-item label="排序" prop="sortOrder">
+          <el-input-number v-model="form.sortOrder" :min="0" :max="999" />
         </el-form-item>
-        <el-form-item label="状态" prop="status">
-          <el-switch v-model="form.status" :active-value="1" :inactive-value="0" active-text="正常" inactive-text="禁用" />
+        <el-form-item label="描述" prop="description">
+          <el-input v-model="form.description" type="textarea" :rows="3" placeholder="请输入描述" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -85,7 +79,7 @@ const loadData = () => {
   categoryTree()
     .then((res) => {
       tableData.value = res || []
-      categoryOptions.value = [{ id: 0, name: '顶级类别', children: res || [] }]
+      categoryOptions.value = [{ categoryId: 0, categoryName: '顶级类别', children: res || [] }]
     })
     .catch((err) => {
       console.error('获取类别树失败', err)
@@ -99,20 +93,20 @@ const dialogVisible = ref(false)
 const dialogTitle = ref('新增类别')
 const formRef = ref()
 const form = reactive({
-  id: null,
+  categoryId: null,
   parentId: 0,
-  name: '',
-  sort: 0,
-  status: 1
+  categoryName: '',
+  sortOrder: 0,
+  description: ''
 })
 
 const rules = {
-  name: [{ required: true, message: '请输入类别名称', trigger: 'blur' }]
+  categoryName: [{ required: true, message: '请输入类别名称', trigger: 'blur' }]
 }
 
 const handleAdd = (row) => {
   dialogTitle.value = '新增类别'
-  Object.assign(form, { id: null, parentId: row ? row.id : 0, name: '', sort: 0, status: 1 })
+  Object.assign(form, { categoryId: null, parentId: row ? row.categoryId : 0, categoryName: '', sortOrder: 0, description: '' })
   dialogVisible.value = true
 }
 
@@ -126,10 +120,12 @@ const handleSubmit = () => {
   formRef.value.validate((valid) => {
     if (!valid) return
     submitLoading.value = true
-    const api = form.id ? categoryUpdate(form) : categoryAdd(form)
+    const submitData = { ...form }
+    delete submitData.children
+    const api = form.categoryId ? categoryUpdate(submitData) : categoryAdd(submitData)
     api
       .then(() => {
-        ElMessage.success(form.id ? '修改成功' : '新增成功')
+        ElMessage.success(form.categoryId ? '修改成功' : '新增成功')
         dialogVisible.value = false
         loadData()
       })
@@ -143,13 +139,13 @@ const handleSubmit = () => {
 }
 
 const handleDelete = (row) => {
-  ElMessageBox.confirm(`确定删除类别「${row.name}」吗？`, '提示', {
+  ElMessageBox.confirm(`确定删除类别「${row.categoryName}」吗？`, '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning'
   })
     .then(() => {
-      categoryDelete(row.id)
+      categoryDelete(row.categoryId)
         .then(() => {
           ElMessage.success('删除成功')
           loadData()

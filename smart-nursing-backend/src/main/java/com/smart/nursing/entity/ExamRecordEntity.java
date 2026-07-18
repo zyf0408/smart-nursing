@@ -77,4 +77,42 @@ public class ExamRecordEntity implements Serializable {
      */
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
+
+    // ===== 非数据库字段（关联查询用）=====
+
+    /**
+     * 考试名称（关联查询）
+     */
+    @TableField(exist = false)
+    private String examName;
+
+    /**
+     * 考试总分（关联查询）
+     */
+    @TableField(exist = false)
+    private Integer totalScore;
+
+    /**
+     * 及格分数（关联查询）
+     */
+    @TableField(exist = false)
+    private Integer passScore;
+
+    /**
+     * 考试时长-分钟（关联查询）
+     */
+    @TableField(exist = false)
+    private Integer examDuration;
+
+    /**
+     * 考生姓名（关联查询）
+     */
+    @TableField(exist = false)
+    private String username;
+
+    /**
+     * 实际用时-分钟（关联查询计算）
+     */
+    @TableField(exist = false)
+    private Integer duration;
 }

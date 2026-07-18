@@ -11,8 +11,8 @@
 
       <el-form ref="formRef" :model="form" :rules="rules" label-width="100px" class="edit-form">
         <el-divider content-position="left">基本信息</el-divider>
-        <el-form-item label="考试名称" prop="title">
-          <el-input v-model="form.title" placeholder="请输入考试名称" />
+        <el-form-item label="考试名称" prop="examName">
+          <el-input v-model="form.examName" placeholder="请输入考试名称" />
         </el-form-item>
         <el-form-item label="考试描述" prop="description">
           <el-input v-model="form.description" type="textarea" :rows="3" placeholder="请输入考试描述" />
@@ -37,8 +37,8 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="考试次数" prop="attemptLimit">
-              <el-input-number v-model="form.attemptLimit" :min="1" :max="99" style="width: 100%" />
+            <el-form-item label="考试次数" prop="maxAttempts">
+              <el-input-number v-model="form.maxAttempts" :min="1" :max="99" style="width: 100%" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -63,9 +63,9 @@
         <el-table :data="selectedQuestions" border style="width: 100%">
           <el-table-column type="index" label="#" width="50" align="center" />
           <el-table-column prop="content" label="题目内容" min-width="300" show-overflow-tooltip />
-          <el-table-column prop="type" label="题型" width="100" align="center">
+          <el-table-column prop="questionType" label="题型" width="100" align="center">
             <template #default="{ row }">
-              <el-tag>{{ getQuestionTypeText(row.type) }}</el-tag>
+              <el-tag>{{ getQuestionTypeText(row.questionType) }}</el-tag>
             </template>
           </el-table-column>
           <el-table-column prop="score" label="分值" width="80" align="center" />
@@ -87,11 +87,10 @@
     <el-dialog v-model="questionSelectVisible" title="选择试题" width="800px">
       <div class="search-bar">
         <el-input v-model="questionParams.content" placeholder="题目内容" clearable style="width: 200px" @keyup.enter="loadQuestions" />
-        <el-select v-model="questionParams.type" placeholder="题型" clearable style="width: 120px">
-          <el-option label="单选题" value="1" />
-          <el-option label="多选题" value="2" />
-          <el-option label="判断题" value="3" />
-          <el-option label="简答题" value="4" />
+        <el-select v-model="questionParams.questionType" placeholder="题型" clearable style="width: 120px">
+          <el-option label="单选题" :value="1" />
+          <el-option label="多选题" :value="2" />
+          <el-option label="判断题" :value="3" />
         </el-select>
         <el-button type="primary" :icon="Search" @click="loadQuestions">搜索</el-button>
       </div>
@@ -104,9 +103,9 @@
       >
         <el-table-column type="selection" width="50" />
         <el-table-column prop="content" label="题目内容" min-width="300" show-overflow-tooltip />
-        <el-table-column prop="type" label="题型" width="100" align="center">
+        <el-table-column prop="questionType" label="题型" width="100" align="center">
           <template #default="{ row }">
-            <el-tag>{{ getQuestionTypeText(row.type) }}</el-tag>
+            <el-tag>{{ getQuestionTypeText(row.questionType) }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="score" label="分值" width="80" align="center" />
@@ -145,27 +144,27 @@ const submitLoading = ref(false)
 const isEdit = computed(() => !!route.query.id)
 
 const form = reactive({
-  id: null,
-  title: '',
+  examId: null,
+  examName: '',
   description: '',
   totalScore: 100,
   passScore: 60,
   duration: 60,
-  attemptLimit: 1,
+  maxAttempts: 1,
   startTime: '',
   endTime: '',
   questionIds: []
 })
 
 const rules = {
-  title: [{ required: true, message: '请输入考试名称', trigger: 'blur' }],
+  examName: [{ required: true, message: '请输入考试名称', trigger: 'blur' }],
   duration: [{ required: true, message: '请输入考试时长', trigger: 'blur' }]
 }
 
 const selectedQuestions = ref([])
 
 const getQuestionTypeText = (type) => {
-  const map = { 1: '单选题', 2: '多选题', 3: '判断题', 4: '简答题' }
+  const map = { 1: '单选题', 2: '多选题', 3: '判断题' }
   return map[type] || '未知'
 }
 
@@ -178,7 +177,7 @@ const questionParams = reactive({
   pageNum: 1,
   pageSize: 10,
   content: '',
-  type: ''
+  questionType: ''
 })
 const tempSelectedQuestions = ref([])
 
@@ -199,8 +198,8 @@ const handleSelectionChange = (selection) => {
 
 const confirmSelectQuestions = () => {
   tempSelectedQuestions.value.forEach((q) => {
-    if (!form.questionIds.includes(q.id)) {
-      form.questionIds.push(q.id)
+    if (!form.questionIds.includes(q.questionId)) {
+      form.questionIds.push(q.questionId)
       selectedQuestions.value.push(q)
     }
   })
@@ -236,10 +235,10 @@ const handleSubmit = () => {
       return
     }
     submitLoading.value = true
-    const api = form.id ? examUpdate(form) : examAdd(form)
+    const api = form.examId ? examUpdate(form) : examAdd(form)
     api
       .then(() => {
-        ElMessage.success(form.id ? '修改成功' : '新增成功')
+        ElMessage.success(form.examId ? '修改成功' : '新增成功')
         router.push('/exam/list')
       })
       .catch((err) => {

@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -60,6 +61,8 @@ public class ExamServiceImpl extends ServiceImpl<ExamMapper, ExamEntity> impleme
                     .map(ExamQuestionEntity::getQuestionId)
                     .collect(Collectors.toList());
             List<QuestionEntity> questionList = questionMapper.selectBatchIds(questionIds);
+            // 防作弊：打乱试题顺序（每个学员看到的题目顺序不同）
+            Collections.shuffle(questionList);
             vo.setQuestionList(questionList);
         } else {
             vo.setQuestionList(new ArrayList<>());
@@ -92,8 +95,29 @@ public class ExamServiceImpl extends ServiceImpl<ExamMapper, ExamEntity> impleme
     public void publishExam(Long examId) {
         ExamEntity exam = this.getById(examId);
         if (exam != null) {
-            exam.setStatus(1);
+            // 切换发布状态：已发布(1)→已结束(2)，未发布(0)→已发布(1)
+            Integer currentStatus = exam.getStatus();
+            exam.setStatus(currentStatus != null && currentStatus == 1 ? 2 : 1);
             this.updateById(exam);
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void assignQuestions(Long examId, List<Long> questionIds) {
+        // 先删除旧的关联
+        examQuestionMapper.delete(new LambdaQueryWrapper<ExamQuestionEntity>()
+                .eq(ExamQuestionEntity::getExamId, examId));
+        // 再批量插入新的关联
+        if (questionIds != null && !questionIds.isEmpty()) {
+            int sortOrder = 1;
+            for (Long questionId : questionIds) {
+                ExamQuestionEntity eq = new ExamQuestionEntity();
+                eq.setExamId(examId);
+                eq.setQuestionId(questionId);
+                eq.setSortOrder(sortOrder++);
+                examQuestionMapper.insert(eq);
+            }
         }
     }
 }

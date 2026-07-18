@@ -17,6 +17,7 @@ import com.smart.nursing.entity.UserEntity;
 import com.smart.nursing.entity.VideoEntity;
 import com.smart.nursing.service.ILearningService;
 import com.smart.nursing.vo.LearningProgressVo;
+import com.smart.nursing.vo.LearningRecordVo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -140,14 +141,9 @@ public class LearningServiceImpl extends ServiceImpl<LearningRecordMapper, Learn
     }
 
     @Override
-    public IPage<LearningRecordEntity> listLearningRecords(LearningRecordDto dto) {
-        Page<LearningRecordEntity> page = new Page<>(dto.getPageNo(), dto.getPageSize());
-        LambdaQueryWrapper<LearningRecordEntity> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(dto.getUserId() != null, LearningRecordEntity::getUserId, dto.getUserId());
-        wrapper.eq(dto.getContentType() != null, LearningRecordEntity::getContentType, dto.getContentType());
-        wrapper.eq(dto.getContentId() != null, LearningRecordEntity::getContentId, dto.getContentId());
-        wrapper.orderByDesc(LearningRecordEntity::getLastStudyTime);
-        return this.page(page, wrapper);
+    public IPage<LearningRecordVo> listLearningRecords(LearningRecordDto dto) {
+        Page<LearningRecordVo> page = new Page<>(dto.getPageNo(), dto.getPageSize());
+        return baseMapper.selectRecordPage(page, dto);
     }
 
     /**

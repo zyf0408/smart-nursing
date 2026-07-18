@@ -7,22 +7,50 @@
         <span v-show="!isCollapse" class="logo-text">智慧护理</span>
       </div>
       <el-scrollbar class="menu-scrollbar">
-        <el-menu
-          :default-active="activeMenu"
-          :collapse="isCollapse"
-          :collapse-transition="false"
-          router
-          background-color="#304156"
-          text-color="#bfcbd9"
-          active-text-color="#409eff"
-          unique-opened
-        >
-          <menu-tree
-            v-for="item in userStore.menuList"
-            :key="item.id"
-            :item="item"
-          />
-        </el-menu>
+        <div class="custom-menu">
+          <template v-for="item in visibleMenuList" :key="item.menuId">
+            <!-- 有子菜单的目录 -->
+            <div v-if="item.children && item.children.length > 0" class="menu-group">
+              <div
+                class="menu-title"
+                :class="{ active: isGroupActive(item) }"
+                @click="toggleGroup(String(item.menuId))"
+              >
+                <el-icon v-if="item.icon"><component :is="item.icon" /></el-icon>
+                <span v-show="!isCollapse" class="menu-text">{{ item.title }}</span>
+                <el-icon v-show="!isCollapse" class="menu-arrow" :class="{ rotated: openedGroups.has(String(item.menuId)) }">
+                  <ArrowDown />
+                </el-icon>
+              </div>
+              <div
+                v-show="!isCollapse"
+                class="menu-children"
+                :style="{ maxHeight: openedGroups.has(String(item.menuId)) ? '500px' : '0' }"
+              >
+                <div
+                  v-for="child in item.children"
+                  :key="child.menuId"
+                  class="menu-item"
+                  :class="{ active: route.path === child.path }"
+                  @click="navigateTo(child.path)"
+                >
+                  <el-icon v-if="child.icon"><component :is="child.icon" /></el-icon>
+                  <span class="menu-text">{{ child.title }}</span>
+                </div>
+              </div>
+            </div>
+            <!-- 无子菜单的叶子节点 -->
+            <div
+              v-else
+              class="menu-item leaf"
+              :class="{ active: route.path === item.path }"
+              @click="navigateTo(item.path)"
+            >
+              <el-icon v-if="item.icon"><component :is="item.icon" /></el-icon>
+              <span v-show="!isCollapse" class="menu-text">{{ item.title }}</span>
+            </div>
+          </template>
+        </div>
       </el-scrollbar>
     </el-aside>
 
@@ -86,15 +114,32 @@ import { useRouter, useRoute } from 'vue-router'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
 import { resetRouter } from '@/router'
-import MenuTree from '@/components/MenuTree.vue'
 
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
 
 const isCollapse = ref(false)
+const openedGroups = ref(new Set())
 
 const activeMenu = computed(() => route.path)
+
+// 过滤菜单：只显示 visible !== 0 的菜单项
+const visibleMenuList = computed(() => {
+  const result = []
+  for (const item of userStore.menuList) {
+    if (item.visible === 0) continue
+    if (item.children && item.children.length > 0) {
+      const visibleChildren = item.children.filter(child => child.visible !== 0)
+      if (visibleChildren.length > 0) {
+        result.push({ ...item, children: visibleChildren })
+      }
+    } else {
+      result.push(item)
+    }
+  }
+  return result
+})
 
 const breadcrumbList = computed(() => {
   const matched = route.matched.filter((item) => item.meta && item.meta.title)
@@ -103,6 +148,26 @@ const breadcrumbList = computed(() => {
     title: item.meta.title
   }))
 })
+
+const isGroupActive = (item) => {
+  if (!item.children) return false
+  return item.children.some(child => route.path === child.path)
+}
+
+const toggleGroup = (id) => {
+  if (isCollapse.value) return
+  if (openedGroups.value.has(id)) {
+    openedGroups.value.delete(id)
+  } else {
+    openedGroups.value.add(id)
+  }
+  // 触发响应式更新
+  openedGroups.value = new Set(openedGroups.value)
+}
+
+const navigateTo = (path) => {
+  if (path) router.push(path)
+}
 
 const toggleCollapse = () => {
   isCollapse.value = !isCollapse.value
@@ -157,9 +222,97 @@ const handleCommand = (command) => {
 
   .menu-scrollbar {
     height: calc(100vh - 60px);
+  }
+}
 
-    :deep(.el-menu) {
-      border-right: none;
+.custom-menu {
+  user-select: none;
+
+  .menu-group {
+    .menu-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      height: 56px;
+      padding: 0 20px;
+      color: #bfcbd9;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      white-space: nowrap;
+
+      &:hover {
+        background-color: #263445;
+      }
+
+      &.active {
+        color: #409eff;
+      }
+
+      .menu-text {
+        flex: 1;
+        font-size: 14px;
+      }
+
+      .menu-arrow {
+        transition: transform 0.3s;
+        font-size: 12px;
+
+        &.rotated {
+          transform: rotate(180deg);
+        }
+      }
+    }
+
+    .menu-children {
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+
+      .menu-item {
+        padding-left: 48px;
+        height: 48px;
+        line-height: 48px;
+        color: #bfcbd9;
+        cursor: pointer;
+        transition: all 0.2s;
+        white-space: nowrap;
+
+        &:hover {
+          background-color: #263445;
+          color: #fff;
+        }
+
+        &.active {
+          color: #409eff;
+          background-color: #1f2d3d;
+        }
+      }
+    }
+  }
+
+  .menu-item.leaf {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 56px;
+    padding: 0 20px;
+    color: #bfcbd9;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+
+    &:hover {
+      background-color: #263445;
+      color: #fff;
+    }
+
+    &.active {
+      color: #409eff;
+      background-color: #1f2d3d;
+    }
+
+    .menu-text {
+      flex: 1;
+      font-size: 14px;
     }
   }
 }

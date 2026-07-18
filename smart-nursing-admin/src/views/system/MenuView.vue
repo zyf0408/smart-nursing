@@ -11,7 +11,7 @@
       <el-table
         v-loading="loading"
         :data="tableData"
-        row-key="id"
+        row-key="menuId"
         border
         default-expand-all
         :tree-props="{ children: 'children' }"
@@ -24,18 +24,18 @@
         </el-table-column>
         <el-table-column prop="path" label="路由地址" min-width="160" />
         <el-table-column prop="component" label="组件路径" min-width="180" />
-        <el-table-column prop="type" label="类型" width="80" align="center">
+        <el-table-column label="类型" width="80" align="center">
           <template #default="{ row }">
-            <el-tag :type="row.type === 1 ? 'primary' : 'info'">
-              {{ row.type === 1 ? '目录' : '菜单' }}
+            <el-tag :type="row.children && row.children.length > 0 ? 'primary' : 'info'">
+              {{ row.children && row.children.length > 0 ? '目录' : '菜单' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="sort" label="排序" width="80" align="center" />
-        <el-table-column prop="status" label="状态" width="80" align="center">
+        <el-table-column prop="sortOrder" label="排序" width="80" align="center" />
+        <el-table-column label="可见" width="80" align="center">
           <template #default="{ row }">
-            <el-tag :type="row.status === 1 ? 'success' : 'danger'">
-              {{ row.status === 1 ? '正常' : '禁用' }}
+            <el-tag :type="row.visible === 1 ? 'success' : 'danger'">
+              {{ row.visible === 1 ? '显示' : '隐藏' }}
             </el-tag>
           </template>
         </el-table-column>
@@ -61,7 +61,7 @@
           <el-tree-select
             v-model="form.parentId"
             :data="menuOptions"
-            :props="{ label: 'title', value: 'id', children: 'children' }"
+            :props="{ label: 'title', value: 'menuId', children: 'children' }"
             check-strictly
             default-expand-all
             placeholder="请选择上级菜单（顶级留空）"
@@ -90,11 +90,11 @@
         <el-form-item label="路由名称" prop="name">
           <el-input v-model="form.name" placeholder="请输入路由名称" />
         </el-form-item>
-        <el-form-item label="排序" prop="sort">
-          <el-input-number v-model="form.sort" :min="0" :max="999" />
+        <el-form-item label="排序" prop="sortOrder">
+          <el-input-number v-model="form.sortOrder" :min="0" :max="999" />
         </el-form-item>
-        <el-form-item label="状态" prop="status">
-          <el-switch v-model="form.status" :active-value="1" :inactive-value="0" active-text="正常" inactive-text="禁用" />
+        <el-form-item label="是否可见" prop="visible">
+          <el-switch v-model="form.visible" :active-value="1" :inactive-value="0" active-text="显示" inactive-text="隐藏" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -121,7 +121,7 @@ const loadData = () => {
   menuTree()
     .then((res) => {
       tableData.value = res || []
-      menuOptions.value = [{ id: 0, title: '顶级菜单', children: res || [] }]
+      menuOptions.value = [{ menuId: 0, title: '顶级菜单', children: res || [] }]
     })
     .catch((err) => {
       console.error('获取菜单树失败', err)
@@ -136,7 +136,7 @@ const dialogVisible = ref(false)
 const dialogTitle = ref('新增菜单')
 const formRef = ref()
 const form = reactive({
-  id: null,
+  menuId: null,
   parentId: 0,
   type: 2,
   title: '',
@@ -144,8 +144,8 @@ const form = reactive({
   path: '',
   component: '',
   name: '',
-  sort: 0,
-  status: 1
+  sortOrder: 0,
+  visible: 1
 })
 
 const rules = {
@@ -157,23 +157,23 @@ const rules = {
 const handleAdd = (row) => {
   dialogTitle.value = '新增菜单'
   Object.assign(form, {
-    id: null,
-    parentId: row ? row.id : 0,
+    menuId: null,
+    parentId: row ? row.menuId : 0,
     type: 2,
     title: '',
     icon: '',
     path: '',
     component: '',
     name: '',
-    sort: 0,
-    status: 1
+    sortOrder: 0,
+    visible: 1
   })
   dialogVisible.value = true
 }
 
 const handleEdit = (row) => {
   dialogTitle.value = '编辑菜单'
-  Object.assign(form, { ...row })
+  Object.assign(form, { ...row, type: (row.children && row.children.length > 0) ? 1 : 2 })
   dialogVisible.value = true
 }
 
@@ -181,10 +181,13 @@ const handleSubmit = () => {
   formRef.value.validate((valid) => {
     if (!valid) return
     submitLoading.value = true
-    const api = form.id ? menuUpdate(form) : menuAdd(form)
+    const submitData = { ...form }
+    delete submitData.type
+    delete submitData.children
+    const api = form.menuId ? menuUpdate(submitData) : menuAdd(submitData)
     api
       .then(() => {
-        ElMessage.success(form.id ? '修改成功' : '新增成功')
+        ElMessage.success(form.menuId ? '修改成功' : '新增成功')
         dialogVisible.value = false
         loadData()
       })
@@ -204,7 +207,7 @@ const handleDelete = (row) => {
     type: 'warning'
   })
     .then(() => {
-      menuDelete(row.id)
+      menuDelete(row.menuId)
         .then(() => {
           ElMessage.success('删除成功')
           loadData()

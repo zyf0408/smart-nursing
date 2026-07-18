@@ -84,15 +84,14 @@ const handleLogin = () => {
       .then((res) => {
         userStore.setToken(res.token)
         userStore.setUserInfo({
-          id: res.id,
+          id: res.userId,
           username: res.username,
-          nickname: res.nickname,
+          nickname: res.realName,
           avatar: res.avatar,
           roleCode: res.roleCode
         })
-        return userStore.fetchMenus()
-      })
-      .then(() => {
+        // 登录响应已包含菜单树，直接设置
+        userStore.setMenuList(res.menuList || [])
         ElMessage.success('登录成功')
         resetRouter()
         router.push('/dashboard')

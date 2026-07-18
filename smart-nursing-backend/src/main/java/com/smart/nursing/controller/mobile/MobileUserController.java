@@ -1,6 +1,7 @@
 package com.smart.nursing.controller.mobile;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.smart.nursing.aop.LoginUser;
 import com.smart.nursing.common.enums.GlobalErrorCodeConstants;
 import com.smart.nursing.common.exception.BusinessException;
@@ -8,17 +9,17 @@ import com.smart.nursing.common.result.CommonResult;
 import com.smart.nursing.common.utils.SecurityUtils;
 import com.smart.nursing.dto.ExamRecordDto;
 import com.smart.nursing.dto.LearningRecordDto;
-import com.smart.nursing.entity.ExamRecordEntity;
-import com.smart.nursing.entity.UserEntity;
-import com.smart.nursing.service.IExamRecordService;
-import com.smart.nursing.service.ILearningService;
-import com.smart.nursing.service.IUserService;
+import com.smart.nursing.entity.*;
+import com.smart.nursing.service.*;
 import com.smart.nursing.vo.LearningProgressVo;
+import com.smart.nursing.vo.LearningRecordVo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.*;
 
 /**
  * 移动端用户 Controller
@@ -32,6 +33,9 @@ public class MobileUserController {
     private final IUserService userService;
     private final ILearningService learningService;
     private final IExamRecordService examRecordService;
+    private final IArticleService articleService;
+    private final IVideoService videoService;
+    private final IPptService pptService;
 
     @Operation(summary = "当前用户信息")
     @GetMapping("/info")
@@ -96,7 +100,31 @@ public class MobileUserController {
         dto.setPageNo(pageNo);
         dto.setPageSize(pageSize);
         dto.setUserId(loginUser.getUserId());
-        return CommonResult.successPageData(learningService.listLearningRecords(dto));
+        IPage<LearningRecordVo> page = learningService.listLearningRecords(dto);
+
+        // 转换为带标题和类型名的列表（VO已关联查询内容标题）
+        List<Map<String, Object>> enrichedRecords = new ArrayList<>();
+        for (LearningRecordVo record : page.getRecords()) {
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.put("recordId", record.getRecordId());
+            item.put("userId", record.getUserId());
+            item.put("contentType", record.getContentType());
+            item.put("contentId", record.getContentId());
+            item.put("title", record.getContentTitle());
+            item.put("typeName", getTypeName(record.getContentType()));
+            item.put("progress", record.getProgress());
+            item.put("studyDuration", record.getStudyDuration());
+            item.put("lastStudyTime", record.getLastStudyTime());
+            enrichedRecords.add(item);
+        }
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("records", enrichedRecords);
+        result.put("total", page.getTotal());
+        result.put("current", page.getCurrent());
+        result.put("size", page.getSize());
+        result.put("pages", page.getPages());
+        return CommonResult.success(result);
     }
 
     @Operation(summary = "考试记录")
@@ -110,5 +138,40 @@ public class MobileUserController {
         dto.setPageSize(pageSize);
         dto.setUserId(loginUser.getUserId());
         return CommonResult.successPageData(examRecordService.listRecordByCondition(dto));
+    }
+
+    /**
+     * 根据内容类型和ID查询标题
+     */
+    private String getContentTitle(Integer contentType, Long contentId) {
+        try {
+            switch (contentType) {
+                case 1:
+                    ArticleEntity article = articleService.getById(contentId);
+                    return article != null ? article.getTitle() : "内容已删除";
+                case 2:
+                    VideoEntity video = videoService.getById(contentId);
+                    return video != null ? video.getTitle() : "内容已删除";
+                case 3:
+                    PptEntity ppt = pptService.getById(contentId);
+                    return ppt != null ? ppt.getTitle() : "内容已删除";
+                default:
+                    return "未知内容";
+            }
+        } catch (Exception e) {
+            return "内容已删除";
+        }
+    }
+
+    /**
+     * 获取类型名称
+     */
+    private String getTypeName(Integer contentType) {
+        switch (contentType) {
+            case 1: return "文章";
+            case 2: return "视频";
+            case 3: return "课件";
+            default: return "未知";
+        }
     }
 }

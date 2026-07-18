@@ -12,7 +12,7 @@
       <!-- 基本信息 -->
       <el-descriptions :column="3" border class="info-box">
         <el-descriptions-item label="考生姓名">{{ detail.username }}</el-descriptions-item>
-        <el-descriptions-item label="考试名称">{{ detail.examTitle }}</el-descriptions-item>
+        <el-descriptions-item label="考试名称">{{ detail.examName }}</el-descriptions-item>
         <el-descriptions-item label="得分">
           <span :style="{ color: detail.score >= detail.passScore ? '#67c23a' : '#f56c6c', fontWeight: 'bold' }">
             {{ detail.score }} / {{ detail.totalScore }}
@@ -79,7 +79,7 @@ const loading = ref(false)
 
 const detail = reactive({
   username: '',
-  examTitle: '',
+  examName: '',
   score: 0,
   totalScore: 0,
   passScore: 0,
@@ -94,9 +94,9 @@ const getTypeText = (type) => {
 }
 
 const loadDetail = () => {
-  if (!route.query.id) return
+  if (!route.query.recordId) return
   loading.value = true
-  recordDetail(route.query.id)
+  recordDetail(route.query.recordId)
     .then((res) => {
       Object.assign(detail, res)
     })
@@ -109,7 +109,7 @@ const loadDetail = () => {
 }
 
 const goBack = () => {
-  router.push('/exam/record')
+  router.push('/examRecord/list')
 }
 
 onMounted(() => {

@@ -29,4 +29,9 @@ public class LearningRecordDto extends PageParam implements Serializable {
      * 内容ID
      */
     private Long contentId;
+
+    /**
+     * 用户名（用于模糊查询）
+     */
+    private String username;
 }

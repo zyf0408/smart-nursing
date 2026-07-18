@@ -15,8 +15,11 @@ import com.smart.nursing.dao.QuestionMapper;
 import com.smart.nursing.dao.UserMapper;
 import com.smart.nursing.dto.ExamRecordDto;
 import com.smart.nursing.entity.*;
+import com.smart.nursing.service.AiScoringService;
 import com.smart.nursing.service.IExamRecordService;
+import com.smart.nursing.vo.AiScoreResult;
 import com.smart.nursing.vo.ExamResultVo;
+import com.smart.nursing.vo.QuestionScoreResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -45,6 +48,7 @@ public class ExamRecordServiceImpl extends ServiceImpl<ExamRecordMapper, ExamRec
     private final UserMapper userMapper;
     private final StringRedisTemplate stringRedisTemplate;
     private final ObjectMapper objectMapper;
+    private final AiScoringService aiScoringService;
 
     @Override
     public IPage<ExamRecordEntity> listRecordByCondition(ExamRecordDto dto) {
@@ -74,7 +78,7 @@ public class ExamRecordServiceImpl extends ServiceImpl<ExamRecordMapper, ExamRec
                     .eq(ExamRecordEntity::getUserId, userId));
             // 4. 判断 max_attempts
             if (exam.getMaxAttempts() != null && attemptedCount >= exam.getMaxAttempts()) {
-                throw new BusinessException(GlobalErrorCodeConstants.EXAM_NOT_AVAILABLE);
+                throw new BusinessException(GlobalErrorCodeConstants.EXAM_MAX_ATTEMPTS);
             }
 
             // 5. 查考试关联的试题
@@ -90,14 +94,13 @@ public class ExamRecordServiceImpl extends ServiceImpl<ExamRecordMapper, ExamRec
             // 6. 解析用户答案 JSON: { "questionId": "userAnswer", ... }
             Map<String, String> userAnswerMap = parseAnswers(answers);
 
-            // 7. 自动判分
+            // 7. 自动判分（客观题精确判分，解答题AI评分）
             int totalScore = 0;
             List<Map<String, Object>> answerDetails = new ArrayList<>();
             for (QuestionEntity question : questionList) {
                 String userAnswer = userAnswerMap.get(String.valueOf(question.getQuestionId()));
-                boolean correct = checkAnswer(question, userAnswer);
-                int earnedScore = correct ? (question.getScore() != null ? question.getScore() : 0) : 0;
-                totalScore += earnedScore;
+                QuestionScoreResult scoreResult = scoreQuestion(question, userAnswer);
+                totalScore += scoreResult.getEarnedScore();
 
                 Map<String, Object> detail = new HashMap<>();
                 detail.put("questionId", question.getQuestionId());
@@ -105,9 +108,11 @@ public class ExamRecordServiceImpl extends ServiceImpl<ExamRecordMapper, ExamRec
                 detail.put("content", question.getContent());
                 detail.put("correctAnswer", question.getAnswer());
                 detail.put("userAnswer", userAnswer);
-                detail.put("isCorrect", correct);
-                detail.put("score", earnedScore);
+                detail.put("isCorrect", scoreResult.isCorrect());
+                detail.put("score", scoreResult.getEarnedScore());
                 detail.put("fullScore", question.getScore());
+                detail.put("feedback", scoreResult.getFeedback());
+                detail.put("needManualReview", scoreResult.isNeedManualReview());
                 answerDetails.add(detail);
             }
 
@@ -168,17 +173,18 @@ public class ExamRecordServiceImpl extends ServiceImpl<ExamRecordMapper, ExamRec
             Map<String, String> userAnswerMap = parseAnswers(record.getAnswers());
             for (QuestionEntity question : questionList) {
                 String userAnswer = userAnswerMap.get(String.valueOf(question.getQuestionId()));
-                boolean correct = checkAnswer(question, userAnswer);
-                int earnedScore = correct ? (question.getScore() != null ? question.getScore() : 0) : 0;
+                QuestionScoreResult scoreResult = scoreQuestion(question, userAnswer);
                 Map<String, Object> detail = new HashMap<>();
                 detail.put("questionId", question.getQuestionId());
                 detail.put("questionType", question.getQuestionType());
                 detail.put("content", question.getContent());
                 detail.put("correctAnswer", question.getAnswer());
                 detail.put("userAnswer", userAnswer);
-                detail.put("isCorrect", correct);
-                detail.put("score", earnedScore);
+                detail.put("isCorrect", scoreResult.isCorrect());
+                detail.put("score", scoreResult.getEarnedScore());
                 detail.put("fullScore", question.getScore());
+                detail.put("feedback", scoreResult.getFeedback());
+                detail.put("needManualReview", scoreResult.isNeedManualReview());
                 answerDetails.add(detail);
             }
         }
@@ -188,20 +194,28 @@ public class ExamRecordServiceImpl extends ServiceImpl<ExamRecordMapper, ExamRec
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void startExam(Long examId, Long userId) {
-        // 查考试信息
+        // 1. 查考试信息
         ExamEntity exam = examMapper.selectById(examId);
         if (exam == null || exam.getStatus() == null || exam.getStatus() != 1) {
             throw new BusinessException(GlobalErrorCodeConstants.EXAM_NOT_AVAILABLE);
         }
-        // 查已考次数
+        // 2. 校验考试时间窗口
+        LocalDateTime now = LocalDateTime.now();
+        if (exam.getStartTime() != null && now.isBefore(exam.getStartTime())) {
+            throw new BusinessException(GlobalErrorCodeConstants.EXAM_NOT_IN_TIME_RANGE);
+        }
+        if (exam.getEndTime() != null && now.isAfter(exam.getEndTime())) {
+            throw new BusinessException(GlobalErrorCodeConstants.EXAM_NOT_IN_TIME_RANGE);
+        }
+        // 3. 查已考次数
         long attemptedCount = this.count(new LambdaQueryWrapper<ExamRecordEntity>()
                 .eq(ExamRecordEntity::getExamId, examId)
                 .eq(ExamRecordEntity::getUserId, userId));
-        // 判断 max_attempts
+        // 4. 判断 max_attempts
         if (exam.getMaxAttempts() != null && attemptedCount >= exam.getMaxAttempts()) {
-            throw new BusinessException(GlobalErrorCodeConstants.EXAM_NOT_AVAILABLE);
+            throw new BusinessException(GlobalErrorCodeConstants.EXAM_MAX_ATTEMPTS);
         }
-        // 创建考试记录 (status=1 进行中, attempt_count+1)
+        // 5. 创建考试记录 (status=1 进行中, attempt_count+1)
         ExamRecordEntity record = new ExamRecordEntity();
         record.setExamId(examId);
         record.setUserId(userId);
@@ -212,6 +226,28 @@ public class ExamRecordServiceImpl extends ServiceImpl<ExamRecordMapper, ExamRec
     }
 
     // ==================== 私有方法 ====================
+
+    /**
+     * 查询学员的考试记录（同一考试取最高分作为最终成绩）
+     */
+    @Override
+    public List<ExamRecordEntity> listMyExamRecords(Long userId) {
+        // 查询该用户所有已交卷的记录（status=2）
+        List<ExamRecordEntity> allRecords = this.list(new LambdaQueryWrapper<ExamRecordEntity>()
+                .eq(ExamRecordEntity::getUserId, userId)
+                .eq(ExamRecordEntity::getStatus, 2)
+                .orderByDesc(ExamRecordEntity::getSubmitTime));
+        // 按 examId 分组，每组取最高分
+        Map<Long, ExamRecordEntity> bestScoreMap = new LinkedHashMap<>();
+        for (ExamRecordEntity record : allRecords) {
+            ExamRecordEntity existing = bestScoreMap.get(record.getExamId());
+            if (existing == null || (record.getScore() != null && (existing.getScore() == null
+                    || record.getScore() > existing.getScore()))) {
+                bestScoreMap.put(record.getExamId(), record);
+            }
+        }
+        return new ArrayList<>(bestScoreMap.values());
+    }
 
     /**
      * 解析答案 JSON
@@ -229,35 +265,67 @@ public class ExamRecordServiceImpl extends ServiceImpl<ExamRecordMapper, ExamRec
     }
 
     /**
-     * 自动判分（单选/多选/判断）
+     * 题目判分（单选/多选/判断精确匹配，解答题AI评分）
      *
      * @param question   试题
      * @param userAnswer 用户答案
-     * @return 是否正确
+     * @return 判分结果
      */
-    private boolean checkAnswer(QuestionEntity question, String userAnswer) {
-        if (userAnswer == null || userAnswer.isEmpty()) {
-            return false;
-        }
-        String correctAnswer = question.getAnswer();
-        if (correctAnswer == null || correctAnswer.isEmpty()) {
-            return false;
-        }
+    private QuestionScoreResult scoreQuestion(QuestionEntity question, String userAnswer) {
+        QuestionScoreResult result = new QuestionScoreResult();
+        int fullScore = question.getScore() != null ? question.getScore() : 0;
+        result.setEarnedScore(0);
+        result.setCorrect(false);
+
         Integer questionType = question.getQuestionType();
         if (questionType == null) {
-            return false;
+            return result;
         }
+
         switch (questionType) {
             case 1: // 单选
             case 3: // 判断
-                return userAnswer.trim().equalsIgnoreCase(correctAnswer.trim());
+                boolean correctExact = checkExactAnswer(question.getAnswer(), userAnswer);
+                result.setCorrect(correctExact);
+                result.setEarnedScore(correctExact ? fullScore : 0);
+                break;
             case 2: // 多选：排序后比较
-                String sortedUser = sortAnswer(userAnswer);
-                String sortedCorrect = sortAnswer(correctAnswer);
-                return sortedUser.equalsIgnoreCase(sortedCorrect);
+                boolean correctMulti = checkMultiAnswer(question.getAnswer(), userAnswer);
+                result.setCorrect(correctMulti);
+                result.setEarnedScore(correctMulti ? fullScore : 0);
+                break;
+            case 4: // 解答题：AI评分
+                AiScoreResult aiResult = aiScoringService.scoreAnswer(
+                        question.getContent(), question.getReferenceAnswer(), userAnswer, fullScore);
+                result.setEarnedScore(aiResult.getScore());
+                result.setCorrect(aiResult.getScore() >= fullScore);
+                result.setFeedback(aiResult.getFeedback());
+                result.setNeedManualReview(aiResult.isNeedManualReview());
+                break;
             default:
-                return false;
+                break;
         }
+        return result;
+    }
+
+    /**
+     * 精确匹配（单选/判断）
+     */
+    private boolean checkExactAnswer(String correctAnswer, String userAnswer) {
+        if (userAnswer == null || userAnswer.isEmpty() || correctAnswer == null || correctAnswer.isEmpty()) {
+            return false;
+        }
+        return userAnswer.trim().equalsIgnoreCase(correctAnswer.trim());
+    }
+
+    /**
+     * 多选匹配（排序后比较）
+     */
+    private boolean checkMultiAnswer(String correctAnswer, String userAnswer) {
+        if (userAnswer == null || userAnswer.isEmpty() || correctAnswer == null || correctAnswer.isEmpty()) {
+            return false;
+        }
+        return sortAnswer(userAnswer).equalsIgnoreCase(sortAnswer(correctAnswer));
     }
 
     /**

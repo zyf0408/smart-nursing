@@ -6,6 +6,8 @@ import com.smart.nursing.dto.ExamDto;
 import com.smart.nursing.entity.ExamEntity;
 import com.smart.nursing.vo.ExamDetailVo;
 
+import java.util.List;
+
 /**
  * 考试 Service 接口
  */
@@ -54,4 +56,12 @@ public interface IExamService extends IService<ExamEntity> {
      * @param examId 考试ID
      */
     void publishExam(Long examId);
+
+    /**
+     * 考试关联试题（组卷）
+     *
+     * @param examId      考试ID
+     * @param questionIds 试题ID列表
+     */
+    void assignQuestions(Long examId, List<Long> questionIds);
 }

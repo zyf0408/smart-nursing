@@ -34,7 +34,7 @@ public class QuestionEntity implements Serializable {
     private Long categoryId;
 
     /**
-     * 题型（1-单选 2-多选 3-判断）
+     * 题型（1-单选 2-多选 3-判断 4-解答题）
      */
     private Integer questionType;
 
@@ -64,9 +64,14 @@ public class QuestionEntity implements Serializable {
     private String optionD;
 
     /**
-     * 正确答案
+     * 正确答案（单选/多选/判断为字母或对错，解答题存参考答案）
      */
     private String answer;
+
+    /**
+     * 参考答案/评分要点（解答题供AI评分使用）
+     */
+    private String referenceAnswer;
 
     /**
      * 解析

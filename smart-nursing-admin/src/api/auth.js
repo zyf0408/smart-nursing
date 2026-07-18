@@ -1,19 +1,21 @@
 import request from '@/utils/request'
 
-// 登录
+// 登录（后端 @RequestParam 接收，需以查询参数方式传递）
 export function login(data) {
+  const query = Object.keys(data)
+    .map(k => `${k}=${encodeURIComponent(data[k])}`)
+    .join('&')
   return request({
-    url: '/auth/login',
-    method: 'post',
-    data
+    url: `/login?${query}`,
+    method: 'post'
   })
 }
 
 // 退出登录
 export function logout() {
   return request({
-    url: '/auth/logout',
-    method: 'post'
+    url: '/logout',
+    method: 'get'
   })
 }
 

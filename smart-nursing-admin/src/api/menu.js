@@ -3,7 +3,7 @@ import request from '@/utils/request'
 // 菜单树
 export function menuTree() {
   return request({
-    url: '/menu/tree',
+    url: '/admin/menu/tree',
     method: 'get'
   })
 }
@@ -11,7 +11,7 @@ export function menuTree() {
 // 菜单列表
 export function menuList(params) {
   return request({
-    url: '/menu/list',
+    url: '/admin/menu/list',
     method: 'get',
     params
   })
@@ -20,7 +20,7 @@ export function menuList(params) {
 // 新增菜单
 export function menuAdd(data) {
   return request({
-    url: '/menu',
+    url: '/admin/menu/add',
     method: 'post',
     data
   })
@@ -29,8 +29,8 @@ export function menuAdd(data) {
 // 修改菜单
 export function menuUpdate(data) {
   return request({
-    url: '/menu',
-    method: 'put',
+    url: '/admin/menu/update',
+    method: 'post',
     data
   })
 }
@@ -38,7 +38,7 @@ export function menuUpdate(data) {
 // 删除菜单
 export function menuDelete(id) {
   return request({
-    url: `/menu/${id}`,
-    method: 'delete'
+    url: `/admin/menu/delete/${id}`,
+    method: 'post'
   })
 }

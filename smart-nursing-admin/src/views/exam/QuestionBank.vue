@@ -10,11 +10,11 @@
           style="width: 200px"
           @keyup.enter="handleSearch"
         />
-        <el-select v-model="queryParams.type" placeholder="题型" clearable style="width: 140px">
-          <el-option label="单选题" value="1" />
-          <el-option label="多选题" value="2" />
-          <el-option label="判断题" value="3" />
-          <el-option label="简答题" value="4" />
+        <el-select v-model="queryParams.questionType" placeholder="题型" clearable style="width: 140px">
+          <el-option label="单选题" :value="1" />
+          <el-option label="多选题" :value="2" />
+          <el-option label="判断题" :value="3" />
+          <el-option label="解答题" :value="4" />
         </el-select>
         <el-button type="primary" :icon="Search" @click="handleSearch">搜索</el-button>
         <el-button :icon="Refresh" @click="handleReset">重置</el-button>
@@ -25,9 +25,9 @@
       <el-table v-loading="loading" :data="tableData" border stripe>
         <el-table-column type="index" label="#" width="50" align="center" />
         <el-table-column prop="content" label="题目内容" min-width="300" show-overflow-tooltip />
-        <el-table-column prop="type" label="题型" width="100" align="center">
+        <el-table-column prop="questionType" label="题型" width="100" align="center">
           <template #default="{ row }">
-            <el-tag>{{ getTypeText(row.type) }}</el-tag>
+            <el-tag>{{ getTypeText(row.questionType) }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="score" label="分值" width="80" align="center" />
@@ -58,19 +58,19 @@
     <!-- 新增/编辑弹窗 -->
     <el-dialog v-model="dialogVisible" :title="dialogTitle" width="700px" @close="resetForm">
       <el-form ref="formRef" :model="form" :rules="rules" label-width="80px" class="dialog-form">
-        <el-form-item label="题型" prop="type">
-          <el-radio-group v-model="form.type" @change="handleTypeChange">
+        <el-form-item label="题型" prop="questionType">
+          <el-radio-group v-model="form.questionType" @change="handleTypeChange">
             <el-radio :value="1">单选题</el-radio>
             <el-radio :value="2">多选题</el-radio>
             <el-radio :value="3">判断题</el-radio>
-            <el-radio :value="4">简答题</el-radio>
+            <el-radio :value="4">解答题</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="题目内容" prop="content">
           <el-input v-model="form.content" type="textarea" :rows="3" placeholder="请输入题目内容" />
         </el-form-item>
         <!-- 选项（单选/多选） -->
-        <template v-if="form.type === 1 || form.type === 2">
+        <template v-if="form.questionType === 1 || form.questionType === 2">
           <el-form-item
             v-for="(option, index) in form.options"
             :key="index"
@@ -83,7 +83,7 @@
             <el-button type="primary" link :icon="Plus" @click="addOption">添加选项</el-button>
           </el-form-item>
           <el-form-item label="正确答案" prop="answer">
-            <el-select v-if="form.type === 1" v-model="form.answer" placeholder="请选择正确选项">
+            <el-select v-if="form.questionType === 1" v-model="form.answer" placeholder="请选择正确选项">
               <el-option
                 v-for="(option, index) in form.options"
                 :key="index"
@@ -102,15 +102,15 @@
           </el-form-item>
         </template>
         <!-- 判断题 -->
-        <el-form-item label="正确答案" prop="answer" v-if="form.type === 3">
+        <el-form-item label="正确答案" prop="answer" v-if="form.questionType === 3">
           <el-radio-group v-model="form.answer">
-            <el-radio value="true">正确</el-radio>
-            <el-radio value="false">错误</el-radio>
+            <el-radio value="对">正确</el-radio>
+            <el-radio value="错">错误</el-radio>
           </el-radio-group>
         </el-form-item>
-        <!-- 简答题 -->
-        <el-form-item label="参考答案" prop="answer" v-if="form.type === 4">
-          <el-input v-model="form.answer" type="textarea" :rows="3" placeholder="请输入参考答案" />
+        <!-- 解答题：参考答案/评分要点（供AI评分） -->
+        <el-form-item label="参考答案" prop="referenceAnswer" v-if="form.questionType === 4">
+          <el-input v-model="form.referenceAnswer" type="textarea" :rows="5" placeholder="请输入参考答案/评分要点（供AI评分使用）" />
         </el-form-item>
         <el-form-item label="分值" prop="score">
           <el-input-number v-model="form.score" :min="1" :max="100" />
@@ -142,11 +142,11 @@ const queryParams = reactive({
   pageNum: 1,
   pageSize: 10,
   content: '',
-  type: ''
+  questionType: ''
 })
 
 const getTypeText = (type) => {
-  const map = { 1: '单选题', 2: '多选题', 3: '判断题', 4: '简答题' }
+  const map = { 1: '单选题', 2: '多选题', 3: '判断题', 4: '解答题' }
   return map[type] || '未知'
 }
 
@@ -174,7 +174,7 @@ const handleSearch = () => {
 
 const handleReset = () => {
   queryParams.content = ''
-  queryParams.type = ''
+  queryParams.questionType = ''
   queryParams.pageNum = 1
   loadData()
 }
@@ -184,18 +184,19 @@ const dialogVisible = ref(false)
 const dialogTitle = ref('新增试题')
 const formRef = ref()
 const form = reactive({
-  id: null,
-  type: 1,
+  questionId: null,
+  questionType: 1,
   content: '',
   options: [{ content: '' }, { content: '' }],
   answer: '',
   answerList: [],
+  referenceAnswer: '',
   score: 5,
   analysis: ''
 })
 
 const rules = {
-  type: [{ required: true, message: '请选择题型', trigger: 'change' }],
+  questionType: [{ required: true, message: '请选择题型', trigger: 'change' }],
   content: [{ required: true, message: '请输入题目内容', trigger: 'blur' }],
   score: [{ required: true, message: '请输入分值', trigger: 'blur' }]
 }
@@ -203,7 +204,8 @@ const rules = {
 const handleTypeChange = () => {
   form.answer = ''
   form.answerList = []
-  if (form.type === 1 || form.type === 2) {
+  form.referenceAnswer = ''
+  if (form.questionType === 1 || form.questionType === 2) {
     form.options = [{ content: '' }, { content: '' }]
   }
 }
@@ -223,12 +225,13 @@ const removeOption = (index) => {
 const handleAdd = () => {
   dialogTitle.value = '新增试题'
   Object.assign(form, {
-    id: null,
-    type: 1,
+    questionId: null,
+    questionType: 1,
     content: '',
     options: [{ content: '' }, { content: '' }],
     answer: '',
     answerList: [],
+    referenceAnswer: '',
     score: 5,
     analysis: ''
   })
@@ -237,10 +240,16 @@ const handleAdd = () => {
 
 const handleEdit = (row) => {
   dialogTitle.value = '编辑试题'
+  // 将后端的 optionA/B/C/D 映射为 options 数组
+  const options = []
+  if (row.optionA) options.push({ content: row.optionA })
+  if (row.optionB) options.push({ content: row.optionB })
+  if (row.optionC) options.push({ content: row.optionC })
+  if (row.optionD) options.push({ content: row.optionD })
   Object.assign(form, {
     ...row,
-    options: row.options ? [...row.options] : [{ content: '' }, { content: '' }],
-    answerList: row.answerList || []
+    options: options.length > 0 ? options : [{ content: '' }, { content: '' }],
+    answerList: row.answer ? row.answer.split(',') : []
   })
   dialogVisible.value = true
 }
@@ -248,16 +257,25 @@ const handleEdit = (row) => {
 const handleSubmit = () => {
   formRef.value.validate((valid) => {
     if (!valid) return
-    // 多选题答案处理
     const submitData = { ...form }
-    if (form.type === 2) {
+    // 多选题答案处理
+    if (form.questionType === 2) {
       submitData.answer = form.answerList.join(',')
     }
+    // 将 options 数组映射为 optionA/B/C/D（仅单选/多选）
+    if ((form.questionType === 1 || form.questionType === 2) && form.options && form.options.length > 0) {
+      submitData.optionA = form.options[0]?.content || ''
+      submitData.optionB = form.options[1]?.content || ''
+      submitData.optionC = form.options[2]?.content || ''
+      submitData.optionD = form.options[3]?.content || ''
+    }
+    delete submitData.options
+    delete submitData.answerList
     submitLoading.value = true
-    const api = form.id ? questionUpdate(submitData) : questionAdd(submitData)
+    const api = form.questionId ? questionUpdate(submitData) : questionAdd(submitData)
     api
       .then(() => {
-        ElMessage.success(form.id ? '修改成功' : '新增成功')
+        ElMessage.success(form.questionId ? '修改成功' : '新增成功')
         dialogVisible.value = false
         loadData()
       })
@@ -277,7 +295,7 @@ const handleDelete = (row) => {
     type: 'warning'
   })
     .then(() => {
-      questionDelete(row.id)
+      questionDelete(row.questionId)
         .then(() => {
           ElMessage.success('删除成功')
           loadData()

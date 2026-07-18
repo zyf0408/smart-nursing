@@ -4,7 +4,7 @@
       <!-- 搜索栏 -->
       <div class="search-bar">
         <el-input
-          v-model="queryParams.title"
+          v-model="queryParams.examName"
           placeholder="考试名称"
           clearable
           style="width: 200px"
@@ -18,7 +18,7 @@
       <!-- 表格 -->
       <el-table v-loading="loading" :data="tableData" border stripe>
         <el-table-column type="index" label="#" width="50" align="center" />
-        <el-table-column prop="title" label="考试名称" min-width="200" show-overflow-tooltip />
+        <el-table-column prop="examName" label="考试名称" min-width="200" show-overflow-tooltip />
         <el-table-column prop="questionCount" label="题目数" width="80" align="center" />
         <el-table-column prop="totalScore" label="总分" width="80" align="center" />
         <el-table-column prop="passScore" label="及格分" width="80" align="center" />
@@ -76,7 +76,7 @@ const total = ref(0)
 const queryParams = reactive({
   pageNum: 1,
   pageSize: 10,
-  title: ''
+  examName: ''
 })
 
 const getStatusType = (status) => {
@@ -110,7 +110,7 @@ const handleSearch = () => {
 }
 
 const handleReset = () => {
-  queryParams.title = ''
+  queryParams.examName = ''
   queryParams.pageNum = 1
   loadData()
 }
@@ -120,17 +120,17 @@ const handleAdd = () => {
 }
 
 const handleEdit = (row) => {
-  router.push(`/exam/edit?id=${row.id}`)
+  router.push(`/exam/edit?id=${row.examId}`)
 }
 
 const handlePublish = (row) => {
-  ElMessageBox.confirm(`确定发布考试「${row.title}」吗？`, '提示', {
+  ElMessageBox.confirm(`确定发布考试「${row.examName}」吗？`, '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning'
   })
     .then(() => {
-      examPublish(row.id)
+      examPublish(row.examId)
         .then(() => {
           ElMessage.success('发布成功')
           loadData()
@@ -143,13 +143,13 @@ const handlePublish = (row) => {
 }
 
 const handleDelete = (row) => {
-  ElMessageBox.confirm(`确定删除考试「${row.title}」吗？`, '提示', {
+  ElMessageBox.confirm(`确定删除考试「${row.examName}」吗？`, '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning'
   })
     .then(() => {
-      examDelete(row.id)
+      examDelete(row.examId)
         .then(() => {
           ElMessage.success('删除成功')
           loadData()

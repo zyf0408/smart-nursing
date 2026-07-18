@@ -34,7 +34,9 @@ public enum GlobalErrorCodeConstants {
     TAG_IN_USE(905, "标签被使用中，不允许删除"),
 
     EXAM_NOT_AVAILABLE(906, "考试不可用"),
-    EXAM_ALREADY_SUBMITTED(907, "考试已提交"),
+    EXAM_ALREADY_SUBMITTED(907, "正在提交中，请勿重复操作"),
+    EXAM_MAX_ATTEMPTS(909, "已达最大考试次数"),
+    EXAM_NOT_IN_TIME_RANGE(910, "不在考试时间范围内"),
     QUESTION_TYPE_ERROR(908, "题目类型错误"),
 
     /* ========== 其它 ========== */

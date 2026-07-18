@@ -125,7 +125,7 @@ const handleAdd = () => {
 }
 
 const handleEdit = (row) => {
-  router.push(`/content/video/edit?id=${row.id}`)
+  router.push(`/content/video/edit?id=${row.videoId}`)
 }
 
 const handleDelete = (row) => {
@@ -135,7 +135,7 @@ const handleDelete = (row) => {
     type: 'warning'
   })
     .then(() => {
-      videoDelete(row.id)
+      videoDelete(row.videoId)
         .then(() => {
           ElMessage.success('删除成功')
           loadData()

@@ -221,8 +221,12 @@ const handleSend = () => {
         if (assistantMsg && assistantMsg.role === 'assistant' && !assistantMsg.content) {
           assistantMsg.content = '抱歉，发生了错误，请稍后重试。'
         }
+        loading.value = false
+        abortController = null
       },
       onClose: () => {
+        loading.value = false
+        abortController = null
         // 更新对话标题（首次回复完成）
         const conv = conversations.value.find((c) => c.id === currentConversationId.value)
         if (conv) {

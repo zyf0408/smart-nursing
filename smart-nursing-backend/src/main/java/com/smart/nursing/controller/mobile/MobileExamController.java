@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.smart.nursing.aop.LoginUser;
 import com.smart.nursing.common.result.CommonResult;
 import com.smart.nursing.entity.ExamEntity;
+import com.smart.nursing.entity.ExamRecordEntity;
 import com.smart.nursing.service.IExamRecordService;
 import com.smart.nursing.service.IExamService;
 import com.smart.nursing.vo.ExamDetailVo;
@@ -66,5 +67,12 @@ public class MobileExamController {
     @GetMapping("/result/{recordId}")
     public CommonResult<ExamResultVo> result(@PathVariable Long recordId) {
         return CommonResult.success(examRecordService.getExamResult(recordId));
+    }
+
+    @Operation(summary = "我的考试记录（取最高分）")
+    @GetMapping("/myRecords")
+    public CommonResult<List<ExamRecordEntity>> myRecords(HttpServletRequest request) {
+        LoginUser loginUser = (LoginUser) request.getAttribute("loginUser");
+        return CommonResult.success(examRecordService.listMyExamRecords(loginUser.getUserId()));
     }
 }

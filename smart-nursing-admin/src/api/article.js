@@ -1,18 +1,19 @@
 import request from '@/utils/request'
 
-// 文章列表
+// 文章列表（后端 POST + @RequestBody ArticleDto）
 export function articleList(params) {
+  const { pageNum, ...rest } = params
   return request({
-    url: '/article/list',
-    method: 'get',
-    params
+    url: '/admin/article/list',
+    method: 'post',
+    data: { ...rest, pageNo: pageNum || 1 }
   })
 }
 
 // 根据ID获取文章
 export function articleGetById(id) {
   return request({
-    url: `/article/${id}`,
+    url: `/admin/article/getById/${id}`,
     method: 'get'
   })
 }
@@ -20,7 +21,7 @@ export function articleGetById(id) {
 // 新增文章
 export function articleAdd(data) {
   return request({
-    url: '/article',
+    url: '/admin/article/add',
     method: 'post',
     data
   })
@@ -29,8 +30,8 @@ export function articleAdd(data) {
 // 修改文章
 export function articleUpdate(data) {
   return request({
-    url: '/article',
-    method: 'put',
+    url: '/admin/article/update',
+    method: 'post',
     data
   })
 }
@@ -38,7 +39,7 @@ export function articleUpdate(data) {
 // 删除文章
 export function articleDelete(id) {
   return request({
-    url: `/article/${id}`,
-    method: 'delete'
+    url: `/admin/article/delete/${id}`,
+    method: 'post'
   })
 }

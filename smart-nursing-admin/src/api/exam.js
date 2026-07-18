@@ -2,17 +2,18 @@ import request from '@/utils/request'
 
 // 考试列表
 export function examList(params) {
+  const { pageNum, ...rest } = params
   return request({
-    url: '/exam/list',
-    method: 'get',
-    params
+    url: '/admin/exam/list',
+    method: 'post',
+    data: { ...rest, pageNo: pageNum || 1 }
   })
 }
 
 // 根据ID获取考试
 export function examGetById(id) {
   return request({
-    url: `/exam/${id}`,
+    url: `/admin/exam/getById/${id}`,
     method: 'get'
   })
 }
@@ -20,7 +21,7 @@ export function examGetById(id) {
 // 新增考试
 export function examAdd(data) {
   return request({
-    url: '/exam',
+    url: '/admin/exam/add',
     method: 'post',
     data
   })
@@ -29,8 +30,8 @@ export function examAdd(data) {
 // 修改考试
 export function examUpdate(data) {
   return request({
-    url: '/exam',
-    method: 'put',
+    url: '/admin/exam/update',
+    method: 'post',
     data
   })
 }
@@ -38,15 +39,15 @@ export function examUpdate(data) {
 // 删除考试
 export function examDelete(id) {
   return request({
-    url: `/exam/${id}`,
-    method: 'delete'
+    url: `/admin/exam/delete/${id}`,
+    method: 'post'
   })
 }
 
 // 发布考试
 export function examPublish(id) {
   return request({
-    url: `/exam/publish/${id}`,
+    url: `/admin/exam/publish/${id}`,
     method: 'post'
   })
 }

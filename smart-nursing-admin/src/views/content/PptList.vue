@@ -114,7 +114,7 @@ const handleAdd = () => {
 }
 
 const handleEdit = (row) => {
-  router.push(`/content/ppt/edit?id=${row.id}`)
+  router.push(`/content/ppt/edit?id=${row.pptId}`)
 }
 
 const handleDelete = (row) => {
@@ -124,7 +124,7 @@ const handleDelete = (row) => {
     type: 'warning'
   })
     .then(() => {
-      pptDelete(row.id)
+      pptDelete(row.pptId)
         .then(() => {
           ElMessage.success('删除成功')
           loadData()

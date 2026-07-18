@@ -2,17 +2,18 @@ import request from '@/utils/request'
 
 // 试题列表
 export function questionList(params) {
+  const { pageNum, ...rest } = params
   return request({
-    url: '/question/list',
-    method: 'get',
-    params
+    url: '/admin/question/list',
+    method: 'post',
+    data: { ...rest, pageNo: pageNum || 1 }
   })
 }
 
 // 新增试题
 export function questionAdd(data) {
   return request({
-    url: '/question',
+    url: '/admin/question/add',
     method: 'post',
     data
   })
@@ -21,8 +22,8 @@ export function questionAdd(data) {
 // 修改试题
 export function questionUpdate(data) {
   return request({
-    url: '/question',
-    method: 'put',
+    url: '/admin/question/update',
+    method: 'post',
     data
   })
 }
@@ -30,7 +31,7 @@ export function questionUpdate(data) {
 // 删除试题
 export function questionDelete(id) {
   return request({
-    url: `/question/${id}`,
-    method: 'delete'
+    url: `/admin/question/delete/${id}`,
+    method: 'post'
   })
 }

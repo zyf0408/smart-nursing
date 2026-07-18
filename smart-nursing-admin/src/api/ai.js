@@ -3,57 +3,57 @@ import request from '@/utils/request'
 // AI 同步对话
 export function chatSync(data) {
   return request({
-    url: '/ai/chat',
+    url: '/ai/chat/sync',
     method: 'post',
-    data
+    params: { message: data.message }
   })
 }
 
 // AI 生成试题
 export function generateQuestion(data) {
   return request({
-    url: '/ai/generateQuestion',
+    url: '/ai/question/generate',
     method: 'post',
-    data
+    params: { examId: data.examId, questionType: data.questionType }
   })
 }
 
 // AI 推荐
 export function recommend(data) {
   return request({
-    url: '/ai/recommend',
-    method: 'post',
-    data
+    url: `/ai/recommend/${data.userId}`,
+    method: 'get'
   })
 }
 
 // AI 生成图片
 export function generateImage(data) {
   return request({
-    url: '/ai/generateImage',
+    url: '/ai/image/generate',
     method: 'post',
-    data
+    params: { prompt: data.prompt }
   })
 }
 
 /**
  * AI 流式对话 - 使用 Fetch + SSE
- * @param {Object} data - { message, conversationId }
- * @param {Object} callbacks - { onMessage, onError, onClose }
- * @returns {AbortController} 用于中断请求
+ * 后端 GET /ai/chat/stream?sessionId=xxx&message=xxx
  */
 export function chatStream(data, callbacks = {}) {
   const controller = new AbortController()
   const token = localStorage.getItem('token')
   const baseURL = import.meta.env.VITE_API_BASE_URL
 
-  fetch(`${baseURL}/ai/chat/stream`, {
-    method: 'POST',
+  const params = new URLSearchParams({
+    sessionId: data.sessionId || data.conversationId || 'default',
+    message: data.message
+  })
+
+  fetch(`${baseURL}/ai/chat/stream?${params}`, {
+    method: 'GET',
     headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`
+      'token': token
     },
-    body: JSON.stringify(data),
     signal: controller.signal
   })
     .then(async (response) => {

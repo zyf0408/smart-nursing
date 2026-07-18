@@ -6,6 +6,8 @@ import com.smart.nursing.dto.ExamRecordDto;
 import com.smart.nursing.entity.ExamRecordEntity;
 import com.smart.nursing.vo.ExamResultVo;
 
+import java.util.List;
+
 /**
  * 考试记录 Service 接口
  */
@@ -44,4 +46,12 @@ public interface IExamRecordService extends IService<ExamRecordEntity> {
      * @param userId 用户ID
      */
     void startExam(Long examId, Long userId);
+
+    /**
+     * 查询学员的考试记录（同一考试取最高分作为最终成绩）
+     *
+     * @param userId 用户ID
+     * @return 考试记录列表（含最高分）
+     */
+    List<ExamRecordEntity> listMyExamRecords(Long userId);
 }
