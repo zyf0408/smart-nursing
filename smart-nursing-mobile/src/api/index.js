@@ -81,7 +81,7 @@ const learn = {
    */
   addFavorite(data) {
     const query = `contentType=${data.contentType}&contentId=${data.contentId}`
-    return http.post(`/mobile/learn/favorite/add?${query}`, {})
+    return http.post(`/mobile/learn/favorite/add?${query}`, {}, { hideLoading: true })
   },
 
   /**
@@ -91,7 +91,7 @@ const learn = {
    */
   removeFavorite(data) {
     const query = `contentType=${data.contentType}&contentId=${data.contentId}`
-    return http.post(`/mobile/learn/favorite/remove?${query}`, {})
+    return http.post(`/mobile/learn/favorite/remove?${query}`, {}, { hideLoading: true })
   },
 
   /**
@@ -134,7 +134,7 @@ const exam = {
    * @param {number|string} id 考试ID
    */
   startExam(id) {
-    return http.post(`/mobile/exam/start/${id}`)
+    return http.post(`/mobile/exam/start/${id}`, {}, { hideLoading: true })
   },
 
   /**
@@ -189,7 +189,10 @@ const user = {
    * @param {Object} data { oldPassword, newPassword }
    */
   changePassword(data) {
-    return http.post('/mobile/user/changePassword', data)
+    const params = new URLSearchParams()
+    params.append('oldPassword', data.oldPassword || '')
+    params.append('newPassword', data.newPassword || '')
+    return http.post(`/mobile/user/changePassword?${params.toString()}`)
   },
 
   /**

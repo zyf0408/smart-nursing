@@ -23,7 +23,7 @@
       <!-- 富文本内容 - 使用 uni-app 内置 rich-text 组件 -->
       <view class="article-body">
         <rich-text
-          :nodes="content.content || ''"
+          :nodes="safeContent"
           :selectable="true"
         />
       </view>
@@ -62,8 +62,28 @@
 
 <script setup>
 import { ref, reactive, computed, onUnmounted } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
+import { onLoad, onUnload } from '@dcloudio/uni-app'
 import { learn } from '@/api/index.js'
+
+/**
+ * 净化 HTML 内容，修复 rich-text 解析崩溃问题
+ * 将非法的 < 字符（非合法 HTML 标签起始）转义为 &lt;
+ */
+const sanitizeHtml = (html) => {
+  if (!html || typeof html !== 'string') return ''
+  // 匹配 < 后面不是合法 HTML 标签名或 / 的情况
+  // 合法标签: <p>, <h1>, </p>, <br/>, <!-- 等
+  // 非法: <35g/L, <100, <5cm 等
+  return html.replace(/<(?!(\/?)(?:[a-zA-Z][a-zA-Z0-9]*|!--|!DOCTYPE|\?))/g, '&lt;')
+}
+
+/**
+ * 处理后的安全内容（用于 rich-text 渲染）
+ */
+const safeContent = computed(() => {
+  if (!content.value || !content.value.content) return ''
+  return sanitizeHtml(content.value.content)
+})
 
 // 内容数据
 const content = ref(null)
@@ -96,10 +116,28 @@ const tagStyle = reactive({
  * 页面加载
  */
 onLoad((options) => {
-  const id = options.id
+  const id = options?.id
   if (id) {
     contentId = id
     loadContent(id)
+  } else {
+    // H5 刷新后 options 可能为空，尝试从 URL 中解析
+    // #ifdef H5
+    const urlParams = new URLSearchParams(window.location.search)
+    const hashParams = window.location.hash.split('?')[1]
+    const hashId = hashParams ? new URLSearchParams(hashParams).get('id') : null
+    const fallbackId = urlParams.get('id') || hashId
+    if (fallbackId) {
+      contentId = fallbackId
+      loadContent(fallbackId)
+    } else {
+      loading.value = false
+      uni.showToast({ title: '参数缺失', icon: 'none' })
+    }
+    // #endif
+    // #ifndef H5
+    loading.value = false
+    // #endif
   }
 })
 
@@ -111,9 +149,13 @@ const loadContent = async (id) => {
   try {
     // contentType=1 为文章
     const res = await learn.getContentDetail(1, id)
+    if (!res) {
+      content.value = null
+      return
+    }
     content.value = res
     isFavorited.value = res.isFavorited || false
-    
+
     // 恢复已有进度
     if (res.progress) {
       studyPercent.value = res.progress.percent || 0
@@ -257,7 +299,7 @@ const formatTime = (time) => {
 }
 
 // 页面卸载时清除定时器
-onUnmounted(() => {
+onUnload(() => {
   if (reportInterval.value) {
     clearInterval(reportInterval.value)
     reportInterval.value = null
@@ -268,7 +310,7 @@ onUnmounted(() => {
 <style lang="scss" scoped>
 .article-detail-page {
   min-height: 100vh;
-  background: #fff;
+  background: #FFFFFF;
   padding-bottom: 120rpx;
 }
 
@@ -277,18 +319,18 @@ onUnmounted(() => {
   justify-content: center;
   align-items: center;
   height: 60vh;
-  color: #999;
+  color: #989FA6;
 }
 
 .article-content {
   .article-header {
     padding: 32rpx 32rpx 20rpx;
-    border-bottom: 1rpx solid #f0f0f0;
+    border-bottom: 1rpx solid #E8E4DE;
 
     .article-title {
       font-size: 40rpx;
       font-weight: bold;
-      color: #222;
+      color: #3A4C56;
       line-height: 1.4;
       display: block;
     }
@@ -301,12 +343,12 @@ onUnmounted(() => {
 
       .meta-item {
         font-size: 24rpx;
-        color: #999;
+        color: #989FA6;
       }
 
       .meta-divider {
         font-size: 24rpx;
-        color: #ddd;
+        color: #E8E4DE;
         margin: 0 12rpx;
       }
     }
@@ -320,7 +362,7 @@ onUnmounted(() => {
     margin: 20rpx 32rpx 40rpx;
     padding: 24rpx;
     background: #f9f9f9;
-    border-radius: 12rpx;
+    border-radius: 24rpx;
 
     .progress-info {
       display: flex;
@@ -329,12 +371,12 @@ onUnmounted(() => {
 
       .progress-label {
         font-size: 26rpx;
-        color: #666;
+        color: #636A70;
       }
 
       .progress-percent {
         font-size: 28rpx;
-        color: #2979ff;
+        color: #0EA5E9;
         font-weight: bold;
       }
     }
@@ -342,16 +384,16 @@ onUnmounted(() => {
     .progress-bar {
       width: 100%;
       height: 12rpx;
-      background: #e0e0e0;
+      background: #E0F2FE;
       border-radius: 6rpx;
       overflow: hidden;
       margin: 16rpx 0 10rpx;
 
       .progress-inner {
         height: 100%;
-        background: linear-gradient(90deg, #2979ff, #42a5f5);
+        background: #0EA5E9;
         border-radius: 6rpx;
-        transition: width 0.5s;
+        transition: width 0.4s ease-out;
       }
     }
 
@@ -370,7 +412,7 @@ onUnmounted(() => {
 
   .empty-text {
     font-size: 28rpx;
-    color: #999;
+    color: #989FA6;
   }
 }
 
@@ -381,8 +423,8 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   display: flex;
-  background: #fff;
-  border-top: 1rpx solid #f0f0f0;
+  background: #FFFFFF;
+  border-top: 1rpx solid #E8E4DE;
   padding: 16rpx 0;
   padding-bottom: calc(16rpx + env(safe-area-inset-bottom));
   z-index: 100;
@@ -399,7 +441,7 @@ onUnmounted(() => {
 
     .action-text {
       font-size: 22rpx;
-      color: #666;
+      color: #636A70;
       margin-top: 6rpx;
     }
   }

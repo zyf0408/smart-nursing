@@ -83,6 +83,20 @@
               <text class="option-text">{{ option.value }}</text>
             </view>
           </view>
+
+          <!-- 解答题 -->
+          <view v-else-if="currentQuestion.type === 'essay'" class="essay-area">
+            <textarea
+              v-model="userAnswers[currentQuestion.id]"
+              class="essay-textarea"
+              placeholder="请在此输入你的解答..."
+              :maxlength="2000"
+              auto-height
+            />
+            <view class="essay-tip">
+              <text>解答题将由AI智能评分，请尽量完整作答</text>
+            </view>
+          </view>
         </view>
 
         <!-- 上一题/下一题按钮 -->
@@ -258,7 +272,7 @@ onLoad((options) => {
  * 前端: { id, type(single/multiple/judge), title, options[{key,value}], score }
  */
 const transformQuestion = (q) => {
-  const typeMap = { 1: 'single', 2: 'multiple', 3: 'judge' }
+  const typeMap = { 1: 'single', 2: 'multiple', 3: 'judge', 4: 'essay' }
   const type = typeMap[q.questionType] || 'single'
   const options = []
   if (q.optionA) options.push({ key: 'A', value: q.optionA })
@@ -484,7 +498,8 @@ const getTypeText = (type) => {
   const map = {
     single: '单选题',
     multiple: '多选题',
-    judge: '判断题'
+    judge: '判断题',
+    essay: '解答题'
   }
   return map[type] || '题目'
 }
@@ -496,7 +511,8 @@ const getTypeClass = (type) => {
   const map = {
     single: 'type-single',
     multiple: 'type-multiple',
-    judge: 'type-judge'
+    judge: 'type-judge',
+    essay: 'type-essay'
   }
   return map[type] || 'type-default'
 }
@@ -626,6 +642,7 @@ onUnmounted(() => {
       &.type-single { background: #e3f2fd; color: #2979ff; }
       &.type-multiple { background: #fff3e0; color: #ff9800; }
       &.type-judge { background: #e8f5e9; color: #4caf50; }
+      &.type-essay { background: #f3e5f5; color: #9c27b0; }
     }
 
     .question-score {
@@ -724,6 +741,31 @@ onUnmounted(() => {
       font-size: 28rpx;
       color: #333;
       line-height: 1.5;
+    }
+  }
+}
+
+/* 解答题文本域 */
+.essay-area {
+  .essay-textarea {
+    width: 100%;
+    min-height: 300rpx;
+    padding: 24rpx;
+    font-size: 28rpx;
+    line-height: 1.6;
+    color: #333;
+    background: #f9f9f9;
+    border: 2rpx solid #e0e0e0;
+    border-radius: 12rpx;
+    box-sizing: border-box;
+  }
+
+  .essay-tip {
+    margin-top: 16rpx;
+    font-size: 24rpx;
+
+    text {
+      color: #9c27b0;
     }
   }
 }

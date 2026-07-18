@@ -21,15 +21,62 @@ export default {
 </script>
 
 <style lang="scss">
-/* 全局样式 */
+/* ===========================
+   智慧护理 - 全局设计系统
+   互联网+智慧护理线上实训平台
+   =========================== */
+
+/* --- 设计令牌（CSS 变量） --- */
 page {
-  background-color: #f5f5f5;
+  /* 主色调 */
+  --color-mist-blue: #D1E4F5;       /* 雾柔医护蓝 - 模块底板 */
+  --color-cream-white: #F7F4EF;     /* 米杏柔白 - 全局背景 */
+  --color-sage-teal: #93B4B8;       /* 浅医护苔青 - 激活态、主标题 */
+  --color-warm-terracotta: #C77A60; /* 暖陶土橙 - 主操作按钮 */
+  --color-soft-pink: #D8B7BC;       /* 雾豆沙柔粉 - 次要标签 */
+
+  /* 文字层级 */
+  --color-text-h1: #3A4C56;         /* 深苔蓝灰 - 一级标题 */
+  --color-text-body: #636A70;       /* 暖调中灰 - 正文 */
+  --color-text-small: #989FA6;      /* 浅沙灰 - 备注/小字 */
+
+  /* 状态色 */
+  --color-success: #95BB92;         /* 浅苔青 - 完成/正常 */
+  --color-warning: #D39468;         /* 浅陶橙 - 警告 */
+  --color-info: #84A7C6;            /* 柔雾蓝 - 系统提示 */
+  --color-error: #D17575;           /* 柔砖红 - 错误 */
+
+  /* 背景与边框 */
+  --bg-page: #F7F4EF;
+  --bg-card: #FFFFFF;
+  --bg-soft: #F0EDE7;
+  --border-soft: #E8E4DE;
+
+  /* 阴影 */
+  --shadow-soft: 0 4rpx 20rpx rgba(147, 180, 184, 0.12);
+  --shadow-card: 0 2rpx 16rpx rgba(58, 76, 86, 0.06);
+  --shadow-hover: 0 8rpx 30rpx rgba(147, 180, 184, 0.15);
+
+  /* 圆角 */
+  --radius-sm: 12rpx;
+  --radius-md: 20rpx;
+  --radius-lg: 28rpx;
+  --radius-full: 999rpx;
+
+  /* 动画 */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-normal: 400ms;
+  --duration-slow: 600ms;
+
+  /* 应用基础样式 */
+  background-color: var(--bg-page);
   font-size: 28rpx;
-  color: #333;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  color: var(--color-text-body);
+  font-family: 'PingFang SC', 'Noto Sans CJK SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.8;
 }
 
-/* 全局通用样式 */
+/* --- 全局通用样式 --- */
 .container {
   padding: 20rpx;
 }
@@ -56,23 +103,23 @@ page {
 }
 
 .text-primary {
-  color: #2979ff;
+  color: var(--color-sage-teal);
 }
 
 .text-success {
-  color: #4caf50;
+  color: var(--color-success);
 }
 
 .text-warning {
-  color: #ff9800;
+  color: var(--color-warning);
 }
 
 .text-danger {
-  color: #f44336;
+  color: var(--color-error);
 }
 
 .text-gray {
-  color: #999;
+  color: var(--color-text-small);
 }
 
 .text-ellipsis {
@@ -90,27 +137,30 @@ page {
 }
 
 .card {
-  background: #fff;
-  border-radius: 16rpx;
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
   padding: 24rpx;
   margin-bottom: 20rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-card);
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #2979ff, #1c6fe8);
+  background: linear-gradient(135deg, var(--color-warm-terracotta), #B56748);
   color: #fff;
   border: none;
-  border-radius: 48rpx;
+  border-radius: var(--radius-full);
   height: 88rpx;
   line-height: 88rpx;
   font-size: 32rpx;
   text-align: center;
+  box-shadow: 0 4rpx 16rpx rgba(199, 122, 96, 0.3);
+  transition: all var(--duration-normal) var(--ease-out);
 }
 
 .btn-primary[disabled] {
-  background: #a0cfff;
+  background: #D1C5BE;
   color: rgba(255, 255, 255, 0.8);
+  box-shadow: none;
 }
 
 /* 空状态 */
@@ -119,7 +169,7 @@ page {
   flex-direction: column;
   align-items: center;
   padding: 100rpx 0;
-  color: #999;
+  color: var(--color-text-small);
   font-size: 28rpx;
 }
 
@@ -127,6 +177,34 @@ page {
   width: 200rpx;
   height: 200rpx;
   margin-bottom: 20rpx;
-  opacity: 0.5;
+  opacity: 0.4;
 }
+
+/* --- 滚动入场动画 --- */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in-up {
+  animation: fadeInUp var(--duration-slow) var(--ease-out) forwards;
+}
+
+/* --- 列表项 hover 效果 --- */
+.hover-lift {
+  transition: all var(--duration-normal) var(--ease-out);
+}
+
+/* #ifdef H5 */
+.hover-lift:hover {
+  transform: translateY(-2rpx);
+  box-shadow: var(--shadow-hover);
+}
+/* #endif */
 </style>

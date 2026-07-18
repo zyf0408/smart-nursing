@@ -29,7 +29,7 @@
               <text class="meta-time">收藏于 {{ formatTime(item.favoriteTime) }}</text>
             </view>
           </view>
-          <view class="card-right" @tap.stop="removeFavorite(item)">
+          <view class="card-right" @tap.stop.prevent="removeFavorite(item)">
             <text class="remove-icon">✕</text>
           </view>
         </view>
@@ -162,7 +162,7 @@ onShow(() => {
 <style lang="scss" scoped>
 .favorite-page {
   height: 100vh;
-  background: #f5f5f5;
+  background: #F8FAFC;
 }
 
 .favorite-scroll {

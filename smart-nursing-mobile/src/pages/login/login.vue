@@ -174,7 +174,7 @@ restoreSavedUsername()
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: linear-gradient(180deg, #2979ff 0%, #1565c0 40%, #f5f5f5 40%, #f5f5f5 100%);
+  background: #F7F4EF;
   padding: 0 60rpx;
 }
 
@@ -193,7 +193,7 @@ restoreSavedUsername()
       width: 120rpx;
       height: 120rpx;
       border-radius: 30rpx;
-      background: rgba(255, 255, 255, 0.25);
+      background: #93B4B8;
       backdrop-filter: blur(10px);
       display: flex;
       align-items: center;
@@ -210,13 +210,13 @@ restoreSavedUsername()
   .app-title {
     font-size: 44rpx;
     font-weight: bold;
-    color: #fff;
+    color: #3A4C56;
     letter-spacing: 4rpx;
   }
 
   .app-subtitle {
     font-size: 24rpx;
-    color: rgba(255, 255, 255, 0.85);
+    color: #636A70;
     margin-top: 12rpx;
   }
 }
@@ -225,9 +225,9 @@ restoreSavedUsername()
 .login-form {
   width: 100%;
   background: #fff;
-  border-radius: 24rpx;
+  border-radius: 28rpx;
   padding: 50rpx 40rpx;
-  box-shadow: 0 8rpx 40rpx rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8rpx 40rpx rgba(58, 76, 86, 0.08);
   margin-top: 20rpx;
 
   .form-item {
@@ -236,12 +236,14 @@ restoreSavedUsername()
     .input-wrapper {
       display: flex;
       align-items: center;
+      background: #F0EDE7;
       border-bottom: 2rpx solid #eee;
+      border-radius: 16rpx;
       padding: 16rpx 0;
-      transition: border-color 0.3s;
+      transition: border-color 0.4s ease-out;
 
       &:focus-within {
-        border-bottom-color: #2979ff;
+        border-bottom-color: #93B4B8;
       }
 
       .input-icon {
@@ -254,7 +256,7 @@ restoreSavedUsername()
         flex: 1;
         height: 72rpx;
         font-size: 30rpx;
-        color: #333;
+        color: #636A70;
       }
 
       .password-toggle {
@@ -289,11 +291,11 @@ restoreSavedUsername()
         align-items: center;
         justify-content: center;
         margin-right: 12rpx;
-        transition: all 0.3s;
+        transition: all 0.4s ease-out;
 
         &.checked {
-          background: #2979ff;
-          border-color: #2979ff;
+          background: #93B4B8;
+          border-color: #93B4B8;
         }
 
         .check-icon {
@@ -305,7 +307,7 @@ restoreSavedUsername()
 
       .remember-text {
         font-size: 26rpx;
-        color: #666;
+        color: #636A70;
       }
     }
   }
@@ -314,13 +316,13 @@ restoreSavedUsername()
     width: 100%;
     height: 92rpx;
     line-height: 92rpx;
-    background: linear-gradient(135deg, #2979ff, #1565c0);
+    background: linear-gradient(135deg, #C77A60, #B56748);
     color: #fff;
     font-size: 34rpx;
     border-radius: 46rpx;
     border: none;
     letter-spacing: 8rpx;
-    box-shadow: 0 8rpx 24rpx rgba(41, 121, 255, 0.35);
+    box-shadow: 0 8rpx 24rpx rgba(199, 122, 96, 0.3);
 
     &::after {
       border: none;
@@ -331,7 +333,7 @@ restoreSavedUsername()
     }
 
     &[disabled] {
-      background: linear-gradient(135deg, #2979ff, #1565c0);
+      background: linear-gradient(135deg, #C77A60, #B56748);
       color: rgba(255, 255, 255, 0.8);
     }
   }

@@ -215,10 +215,10 @@ const handleStartExam = () => {
     title: '确认开始考试',
     content: `考试时长 ${exam.value.duration} 分钟，确认开始吗？`,
     confirmText: '开始',
-    confirmColor: '#2979ff',
+    confirmColor: '#0EA5E9',
     success: async (res) => {
       if (res.confirm) {
-        uni.showLoading({ title: '准备中...' })
+        uni.showLoading({ title: '准备中...', mask: true })
         try {
           // 调用开始考试接口（创建考试记录）
           await examApi.startExam(examId)
@@ -240,6 +240,7 @@ const handleStartExam = () => {
         } catch (err) {
           uni.hideLoading()
           console.error('开始考试失败:', err)
+          uni.showToast({ title: err.message || '开始考试失败', icon: 'none' })
         }
       }
     }
@@ -357,7 +358,7 @@ onUnmounted(() => {
       .stat-value {
         font-size: 36rpx;
         font-weight: bold;
-        color: #2979ff;
+        color: #0EA5E9;
       }
 
       .stat-label {
@@ -469,7 +470,7 @@ onUnmounted(() => {
 
       .notice-dot {
         font-size: 26rpx;
-        color: #2979ff;
+        color: #0EA5E9;
         margin-right: 12rpx;
         flex-shrink: 0;
       }
@@ -512,7 +513,7 @@ onUnmounted(() => {
     width: 100%;
     height: 92rpx;
     line-height: 92rpx;
-    background: linear-gradient(135deg, #2979ff, #1565c0);
+    background: linear-gradient(135deg, #0EA5E9, #0284C7);
     color: #fff;
     font-size: 34rpx;
     border-radius: 46rpx;

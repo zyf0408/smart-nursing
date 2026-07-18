@@ -260,7 +260,7 @@ onShow(() => {
 <style lang="scss" scoped>
 .user-page {
   min-height: 100vh;
-  background: #f5f5f5;
+  background: #F7F4EF;
   padding-bottom: 40rpx;
 }
 
@@ -275,7 +275,7 @@ onShow(() => {
     left: 0;
     right: 0;
     height: 320rpx;
-    background: linear-gradient(135deg, #2979ff, #1565c0);
+    background: linear-gradient(135deg, #93B4B8, #84A7C6);
   }
 
   .user-info-wrapper {
@@ -290,6 +290,7 @@ onShow(() => {
         height: 120rpx;
         border-radius: 50%;
         border: 4rpx solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 4rpx 16rpx rgba(58, 76, 86, 0.15);
 
         &.avatar-default {
           background: rgba(255, 255, 255, 0.3);
@@ -314,6 +315,7 @@ onShow(() => {
         font-size: 36rpx;
         font-weight: bold;
         color: #fff;
+        text-shadow: 0 2rpx 6rpx rgba(58, 76, 86, 0.2);
       }
 
       .user-role {
@@ -325,7 +327,7 @@ onShow(() => {
           font-size: 22rpx;
           color: #fff;
           background: rgba(255, 255, 255, 0.25);
-          padding: 4rpx 16rpx;
+          padding: 4rpx 18rpx;
           border-radius: 20rpx;
           margin-right: 12rpx;
         }
@@ -342,6 +344,7 @@ onShow(() => {
 
       text {
         font-size: 32rpx;
+        color: rgba(255, 255, 255, 0.8);
       }
     }
   }
@@ -349,16 +352,16 @@ onShow(() => {
 
 /* 学习进度统计 */
 .stats-section {
-  padding: 0 24rpx;
+  padding: 0 32rpx;
   margin-top: -30rpx;
   position: relative;
   z-index: 2;
 
   .stats-card {
-    background: #fff;
-    border-radius: 16rpx;
-    padding: 28rpx;
-    box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.08);
+    background: #FFFFFF;
+    border-radius: 24rpx;
+    padding: 32rpx;
+    box-shadow: 0 4rpx 20rpx rgba(58, 76, 86, 0.08);
 
     .stats-title {
       display: flex;
@@ -369,12 +372,12 @@ onShow(() => {
       .title-text {
         font-size: 30rpx;
         font-weight: bold;
-        color: #333;
+        color: #3A4C56;
       }
 
       .title-link {
         font-size: 24rpx;
-        color: #2979ff;
+        color: #D8B7BC;
       }
     }
 
@@ -391,12 +394,12 @@ onShow(() => {
         .stat-value {
           font-size: 40rpx;
           font-weight: bold;
-          color: #2979ff;
+          color: #C77A60;
         }
 
         .stat-label {
           font-size: 24rpx;
-          color: #999;
+          color: #989FA6;
           margin-top: 8rpx;
         }
       }
@@ -404,7 +407,7 @@ onShow(() => {
       .stat-divider {
         width: 1rpx;
         height: 56rpx;
-        background: #f0f0f0;
+        background: #E8E4DE;
       }
     }
 
@@ -414,21 +417,21 @@ onShow(() => {
       .progress-bar {
         width: 100%;
         height: 16rpx;
-        background: #f0f0f0;
+        background: #D1E4F5;
         border-radius: 8rpx;
         overflow: hidden;
 
         .progress-inner {
           height: 100%;
-          background: linear-gradient(90deg, #2979ff, #42a5f5);
+          background: linear-gradient(90deg, #C77A60, #D39468);
           border-radius: 8rpx;
-          transition: width 0.5s;
+          transition: width 0.5s ease-out;
         }
       }
 
       .progress-text {
         font-size: 22rpx;
-        color: #999;
+        color: #989FA6;
         margin-top: 12rpx;
         display: block;
         text-align: right;
@@ -439,55 +442,56 @@ onShow(() => {
 
 /* 功能入口列表 */
 .menu-section {
-  padding: 20rpx 24rpx;
+  padding: 20rpx 32rpx;
 
   .menu-card {
-    background: #fff;
-    border-radius: 16rpx;
+    background: #FFFFFF;
+    border-radius: 24rpx;
     margin-bottom: 20rpx;
     overflow: hidden;
-    box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+    box-shadow: 0 2rpx 16rpx rgba(58, 76, 86, 0.06);
 
     .menu-item {
       display: flex;
       align-items: center;
       padding: 28rpx;
-      border-bottom: 1rpx solid #f5f5f5;
+      border-bottom: 1rpx solid #F0EDE7;
+      transition: background 0.3s ease-out;
 
       &:last-child {
         border-bottom: none;
       }
 
       &:active {
-        background: #f9f9f9;
+        background: #F7F4EF;
       }
 
       .menu-icon {
         width: 64rpx;
         height: 64rpx;
-        border-radius: 14rpx;
+        border-radius: 16rpx;
         display: flex;
         align-items: center;
         justify-content: center;
         margin-right: 24rpx;
         font-size: 30rpx;
 
-        &.icon-favorite { background: #fff3e0; }
-        &.icon-record { background: #e3f2fd; }
-        &.icon-exam { background: #f3e5f5; }
-        &.icon-profile { background: #e8f5e9; }
-        &.icon-password { background: #fce4ec; }
+        &.icon-favorite { background: #F5E0E2; }
+        &.icon-record { background: #D1E4F5; }
+        &.icon-exam { background: #E0EDE0; }
+        &.icon-profile { background: #F5E6DA; }
+        &.icon-password { background: #F5E0E2; }
       }
 
       .menu-text {
         flex: 1;
         font-size: 30rpx;
-        color: #333;
+        color: #3A4C56;
       }
 
       .menu-arrow {
         font-size: 28rpx;
-        color: #ccc;
+        color: #D8B7BC;
       }
 
       &.menu-logout {
@@ -495,7 +499,7 @@ onShow(() => {
 
         .logout-text {
           font-size: 30rpx;
-          color: #f44336;
+          color: #D17575;
           font-weight: 500;
         }
       }

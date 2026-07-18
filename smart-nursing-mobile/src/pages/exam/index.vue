@@ -22,9 +22,9 @@
       :refresher-triggered="isRefreshing"
       @refresherrefresh="onPullDownRefresh"
     >
-      <view v-if="examList.length > 0" class="exam-list">
+      <view v-if="filteredExamList.length > 0" class="exam-list">
         <view
-          v-for="item in examList"
+          v-for="item in filteredExamList"
           :key="item.examId"
           class="exam-card"
           @tap="goExamDetail(item)"
@@ -36,7 +36,7 @@
             <view class="exam-info">
               <text class="exam-title text-ellipsis">{{ item.examName }}</text>
               <view class="exam-tags">
-                <text class="exam-tag tag-normal">已发布</text>
+                <text class="exam-tag" :class="getStatusClass(item.status)">{{ getStatusText(item.status) }}</text>
               </view>
             </view>
           </view>
@@ -66,7 +66,9 @@
               <text v-else class="time-text">长期有效</text>
             </view>
             <view class="exam-action">
-              <text class="action-btn btn-start">开始考试</text>
+              <text v-if="item.status === 1" class="action-btn btn-start">开始考试</text>
+              <text v-else-if="item.status === 0" class="action-btn btn-disabled">未开始</text>
+              <text v-else class="action-btn btn-result">已结束</text>
             </view>
           </view>
         </view>
@@ -87,17 +89,16 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, computed } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { exam } from '@/api/index.js'
 
-// 状态分类
+// 状态分类 - 数字值与后端 status 对齐: 0=未开始 1=可考试 2=已结束
 const statusTabs = ref([
   { label: '全部', value: '', count: undefined },
-  { label: '可考试', value: 'available', count: undefined },
-  { label: '进行中', value: 'ongoing', count: undefined },
-  { label: '已完成', value: 'completed', count: undefined },
-  { label: '已截止', value: 'expired', count: undefined }
+  { label: '未开始', value: 0, count: undefined },
+  { label: '可考试', value: 1, count: undefined },
+  { label: '已结束', value: 2, count: undefined }
 ])
 
 // 状态
@@ -107,6 +108,14 @@ const loading = ref(false)
 const isRefreshing = ref(false)
 
 /**
+ * 按当前状态过滤后的考试列表
+ */
+const filteredExamList = computed(() => {
+  if (currentStatus.value === '') return examList.value
+  return examList.value.filter(item => item.status === currentStatus.value)
+})
+
+/**
  * 加载考试列表
  */
 const loadList = async () => {
@@ -114,6 +123,7 @@ const loadList = async () => {
   try {
     const res = await exam.getExamList()
     examList.value = Array.isArray(res) ? res : (res.list || res.records || [])
+    updateCounts()
   } catch (err) {
     console.error('加载考试列表失败:', err)
     examList.value = []
@@ -123,26 +133,23 @@ const loadList = async () => {
 }
 
 /**
- * 更新状态数量
+ * 更新各状态数量
  */
-const updateStatusCounts = (res) => {
-  const counts = res.counts || {}
+const updateCounts = () => {
   statusTabs.value.forEach(tab => {
-    if (tab.value && counts[tab.value] !== undefined) {
-      tab.count = counts[tab.value]
-    } else if (!tab.value) {
-      tab.count = res.total || examList.value.length
+    if (tab.value === '') {
+      tab.count = examList.value.length
+    } else {
+      tab.count = examList.value.filter(e => e.status === tab.value).length
     }
   })
 }
 
 /**
- * 切换状态
+ * 切换状态（前端过滤，无需重新请求）
  */
 const switchStatus = (value) => {
-  if (currentStatus.value === value) return
   currentStatus.value = value
-  loadList()
 }
 
 /**
@@ -166,14 +173,13 @@ const goExamDetail = (item) => {
 
 /**
  * 获取状态文字
+ * 后端 status: 0-未开始 1-可考试 2-已结束
  */
 const getStatusText = (status) => {
   const map = {
-    available: '可考试',
-    ongoing: '进行中',
-    completed: '已完成',
-    expired: '已截止',
-    not_started: '未开始'
+    0: '未开始',
+    1: '可考试',
+    2: '已结束'
   }
   return map[status] || '未知'
 }
@@ -183,11 +189,9 @@ const getStatusText = (status) => {
  */
 const getStatusClass = (status) => {
   const map = {
-    available: 'status-available',
-    ongoing: 'status-ongoing',
-    completed: 'status-completed',
-    expired: 'status-expired',
-    not_started: 'status-not-started'
+    0: 'status-not-started',
+    1: 'status-available',
+    2: 'status-expired'
   }
   return map[status] || 'status-default'
 }
@@ -212,15 +216,15 @@ onShow(() => {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background: #f5f5f5;
+  background: #F8FAFC;
 }
 
 /* 状态分类 Tab */
 .status-tabs {
   display: flex;
-  background: #fff;
+  background: #FFFFFF;
   padding: 0 12rpx;
-  border-bottom: 1rpx solid #f0f0f0;
+  border-bottom: 1rpx solid #E8E4DE;
 
   .status-tab {
     flex: 1;
@@ -232,18 +236,19 @@ onShow(() => {
 
     .tab-text {
       font-size: 26rpx;
-      color: #666;
+      color: #636A70;
+      transition: color 0.4s ease-out;
     }
 
     .tab-count {
       font-size: 20rpx;
-      color: #999;
+      color: #989FA6;
       margin-top: 6rpx;
     }
 
     &.active {
       .tab-text {
-        color: #2979ff;
+        color: #0EA5E9;
         font-weight: bold;
       }
 
@@ -253,7 +258,7 @@ onShow(() => {
         bottom: 0;
         width: 60rpx;
         height: 6rpx;
-        background: #2979ff;
+        background: #0EA5E9;
         border-radius: 3rpx;
       }
     }
@@ -267,19 +272,21 @@ onShow(() => {
 }
 
 .exam-list {
-  padding: 20rpx 24rpx;
+  padding: 20rpx 32rpx;
 }
 
 /* 考试卡片 */
 .exam-card {
-  background: #fff;
-  border-radius: 16rpx;
+  background: #FFFFFF;
+  border-radius: 24rpx;
   margin-bottom: 20rpx;
-  padding: 28rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+  padding: 32rpx;
+  box-shadow: 0 2rpx 16rpx rgba(58, 76, 86, 0.06);
+  transition: all 0.5s ease-out;
 
   &:active {
-    opacity: 0.85;
+    opacity: 0.9;
+    transform: translateY(1rpx);
   }
 
   .exam-card-header {
@@ -290,19 +297,13 @@ onShow(() => {
     .exam-icon-wrapper {
       width: 80rpx;
       height: 80rpx;
-      border-radius: 16rpx;
+      border-radius: 20rpx;
       display: flex;
       align-items: center;
       justify-content: center;
       margin-right: 20rpx;
       flex-shrink: 0;
-      background: #e3f2fd;
-
-      &.status-available { background: #e8f5e9; }
-      &.status-ongoing { background: #fff3e0; }
-      &.status-completed { background: #f3e5f5; }
-      &.status-expired { background: #fafafa; }
-      &.status-not-started { background: #e0e0e0; }
+      background: #D1E4F5;
 
       .exam-icon {
         font-size: 36rpx;
@@ -316,7 +317,7 @@ onShow(() => {
       .exam-title {
         font-size: 32rpx;
         font-weight: 600;
-        color: #333;
+        color: #3A4C56;
         line-height: 1.4;
       }
 
@@ -327,16 +328,13 @@ onShow(() => {
         .exam-tag {
           font-size: 20rpx;
           padding: 4rpx 14rpx;
-          border-radius: 6rpx;
+          border-radius: 8rpx;
           margin-right: 12rpx;
-          background: #e3f2fd;
-          color: #2979ff;
 
-          &.status-available { background: #e8f5e9; color: #4caf50; }
-          &.status-ongoing { background: #fff3e0; color: #ff9800; }
-          &.status-completed { background: #f3e5f5; color: #9c27b0; }
-          &.status-expired { background: #fafafa; color: #999; }
-          &.tag-normal { background: #f5f5f5; color: #666; }
+          &.status-available { background: #E0F2FE; color: #0EA5E9; }
+          &.status-not-started { background: #F0EDE7; color: #989FA6; }
+          &.status-expired { background: #FEE2E2; color: #EF4444; }
+          &.status-default { background: #F5F5F5; color: #999; }
         }
       }
     }
@@ -346,9 +344,9 @@ onShow(() => {
     display: flex;
     align-items: center;
     justify-content: space-around;
-    background: #f9f9f9;
-    border-radius: 12rpx;
-    padding: 24rpx 0;
+    background: #F0F9FF;
+    border-radius: 16rpx;
+    padding: 28rpx 0;
     margin-bottom: 20rpx;
 
     .exam-stat {
@@ -359,12 +357,12 @@ onShow(() => {
       .stat-value {
         font-size: 36rpx;
         font-weight: bold;
-        color: #333;
+        color: #0EA5E9;
       }
 
       .stat-label {
         font-size: 22rpx;
-        color: #999;
+        color: #989FA6;
         margin-top: 6rpx;
       }
     }
@@ -372,7 +370,7 @@ onShow(() => {
     .exam-divider {
       width: 1rpx;
       height: 48rpx;
-      background: #e0e0e0;
+      background: #E8E4DE;
     }
   }
 
@@ -384,39 +382,32 @@ onShow(() => {
     .exam-time {
       .time-text {
         font-size: 24rpx;
-
-        &.time-available { color: #4caf50; }
-        &.time-ongoing { color: #ff9800; }
-        &.time-completed { color: #9c27b0; }
-        &.time-expired { color: #999; }
+        color: #94A3B8;
       }
     }
 
     .exam-action {
       .action-btn {
         font-size: 26rpx;
-        padding: 12rpx 32rpx;
-        border-radius: 30rpx;
+        padding: 14rpx 36rpx;
+        border-radius: 32rpx;
         font-weight: 500;
+        transition: all 0.4s ease-out;
 
         &.btn-start {
-          background: linear-gradient(135deg, #2979ff, #1565c0);
+          background: linear-gradient(135deg, #0EA5E9, #0284C7);
           color: #fff;
-        }
-
-        &.btn-continue {
-          background: linear-gradient(135deg, #ff9800, #f57c00);
-          color: #fff;
+          box-shadow: 0 4rpx 12rpx rgba(14, 165, 233, 0.25);
         }
 
         &.btn-result {
-          background: #f5f5f5;
-          color: #666;
+          background: #F0EDE7;
+          color: #636A70;
         }
 
         &.btn-disabled {
-          background: #f5f5f5;
-          color: #ccc;
+          background: #F0EDE7;
+          color: #D1C5BE;
         }
       }
     }
@@ -430,7 +421,7 @@ onShow(() => {
 
   .loading-text {
     font-size: 24rpx;
-    color: #999;
+    color: #989FA6;
   }
 }
 
@@ -443,12 +434,12 @@ onShow(() => {
   .empty-icon-text {
     font-size: 100rpx;
     margin-bottom: 20rpx;
-    opacity: 0.4;
+    opacity: 0.35;
   }
 
   .empty-text {
     font-size: 28rpx;
-    color: #999;
+    color: #989FA6;
   }
 }
 </style>

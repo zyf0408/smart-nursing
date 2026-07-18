@@ -108,14 +108,14 @@
     "globalStyle": {
         "navigationBarTextStyle": "white",
         "navigationBarTitleText": "智慧护理",
-        "navigationBarBackgroundColor": "#2979ff",
-        "backgroundColor": "#F8F8F8"
+        "navigationBarBackgroundColor": "#0EA5E9",
+        "backgroundColor": "#F8FAFC"
     },
     "tabBar": {
-        "color": "#7A7E83",
-        "selectedColor": "#2979ff",
-        "borderStyle": "black",
-        "backgroundColor": "#ffffff",
+        "color": "#989FA6",
+        "selectedColor": "#0EA5E9",
+        "borderStyle": "white",
+        "backgroundColor": "#FFFFFF",
         "list": [
             {
                 "pagePath": "pages/learn/index",

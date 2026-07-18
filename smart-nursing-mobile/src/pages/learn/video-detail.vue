@@ -111,7 +111,7 @@
 
 <script setup>
 import { ref, computed, onUnmounted } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
+import { onLoad, onUnload } from '@dcloudio/uni-app'
 import { learn } from '@/api/index.js'
 
 // 内容数据
@@ -145,10 +145,25 @@ const studyPercent = ref(0)
  * 页面加载
  */
 onLoad((options) => {
-  const id = options.id
+  const id = options?.id
   if (id) {
     contentId = id
     loadContent(id)
+  } else {
+    // #ifdef H5
+    const hashParams = window.location.hash.split('?')[1]
+    const hashId = hashParams ? new URLSearchParams(hashParams).get('id') : null
+    if (hashId) {
+      contentId = hashId
+      loadContent(hashId)
+    } else {
+      loading.value = false
+      uni.showToast({ title: '参数缺失', icon: 'none' })
+    }
+    // #endif
+    // #ifndef H5
+    loading.value = false
+    // #endif
   }
 })
 
@@ -159,6 +174,10 @@ const loadContent = async (id) => {
   loading.value = true
   try {
     const res = await learn.getContentDetail(2, id)
+    if (!res) {
+      content.value = null
+      return
+    }
     content.value = res
     isFavorited.value = res.isFavorited || false
     totalTime.value = res.duration || 0
@@ -354,7 +373,7 @@ const formatDuration = (seconds) => {
 }
 
 // 页面卸载时清除定时器并上报
-onUnmounted(() => {
+onUnload(() => {
   if (reportInterval.value) {
     clearInterval(reportInterval.value)
     reportInterval.value = null
@@ -374,7 +393,7 @@ onUnmounted(() => {
 <style lang="scss" scoped>
 .video-detail-page {
   min-height: 100vh;
-  background: #f5f5f5;
+  background: #F8FAFC;
   padding-bottom: 120rpx;
 }
 
@@ -383,36 +402,46 @@ onUnmounted(() => {
   justify-content: center;
   align-items: center;
   height: 40vh;
-  color: #999;
+  color: #989FA6;
 }
 
-/* 视频播放器 */
+/* 视频播放器 - 16:9 比例自适应 */
 .video-player-wrapper {
   width: 100%;
   background: #000;
+  position: relative;
+  padding-bottom: 56.25%; /* 16:9 比例 */
+  height: 0;
+  overflow: hidden;
 
   .video-player {
     width: 100%;
-    height: 420rpx;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
   }
 
   .video-iframe {
     width: 100%;
-    height: 420rpx;
+    height: 100%;
     border: none;
     display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
   }
 }
 
 /* 视频信息 */
 .video-info {
-  background: #fff;
+  background: #FFFFFF;
   padding: 28rpx 32rpx;
 
   .video-title {
     font-size: 36rpx;
     font-weight: bold;
-    color: #222;
+    color: #3A4C56;
     line-height: 1.4;
     display: block;
   }
@@ -424,12 +453,12 @@ onUnmounted(() => {
 
     .meta-item {
       font-size: 24rpx;
-      color: #999;
+      color: #989FA6;
     }
 
     .meta-divider {
       font-size: 24rpx;
-      color: #ddd;
+      color: #E8E4DE;
       margin: 0 12rpx;
     }
   }
@@ -437,7 +466,7 @@ onUnmounted(() => {
 
 /* 学习进度 */
 .progress-section {
-  background: #fff;
+  background: #FFFFFF;
   margin-top: 16rpx;
   padding: 28rpx 32rpx;
 
@@ -449,12 +478,12 @@ onUnmounted(() => {
     .progress-label {
       font-size: 28rpx;
       font-weight: 600;
-      color: #333;
+      color: #3A4C56;
     }
 
     .progress-percent {
       font-size: 32rpx;
-      color: #2979ff;
+      color: #0EA5E9;
       font-weight: bold;
     }
   }
@@ -462,16 +491,16 @@ onUnmounted(() => {
   .progress-bar {
     width: 100%;
     height: 16rpx;
-    background: #f0f0f0;
+    background: #E0F2FE;
     border-radius: 8rpx;
     overflow: hidden;
     margin: 20rpx 0 16rpx;
 
     .progress-inner {
       height: 100%;
-      background: linear-gradient(90deg, #2979ff, #42a5f5);
+      background: #0EA5E9;
       border-radius: 8rpx;
-      transition: width 0.5s;
+      transition: width 0.4s ease-out;
     }
   }
 
@@ -481,28 +510,28 @@ onUnmounted(() => {
 
     .detail-text {
       font-size: 22rpx;
-      color: #999;
+      color: #989FA6;
     }
   }
 }
 
 /* 视频简介 */
 .video-desc {
-  background: #fff;
+  background: #FFFFFF;
   margin-top: 16rpx;
   padding: 28rpx 32rpx;
 
   .desc-title {
     font-size: 28rpx;
     font-weight: 600;
-    color: #333;
+    color: #3A4C56;
     display: block;
     margin-bottom: 16rpx;
   }
 
   .desc-content {
     font-size: 28rpx;
-    color: #666;
+    color: #636A70;
     line-height: 1.7;
   }
 }
@@ -554,7 +583,7 @@ onUnmounted(() => {
 
   .empty-text {
     font-size: 28rpx;
-    color: #999;
+    color: #989FA6;
   }
 }
 
@@ -565,8 +594,8 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   display: flex;
-  background: #fff;
-  border-top: 1rpx solid #f0f0f0;
+  background: #FFFFFF;
+  border-top: 1rpx solid #E8E4DE;
   padding: 16rpx 0;
   padding-bottom: calc(16rpx + env(safe-area-inset-bottom));
   z-index: 100;
@@ -583,7 +612,7 @@ onUnmounted(() => {
 
     .action-text {
       font-size: 22rpx;
-      color: #666;
+      color: #636A70;
       margin-top: 6rpx;
     }
   }

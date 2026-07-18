@@ -17,6 +17,15 @@
       </view>
     </view>
 
+    <!-- 横幅 Banner -->
+    <view class="hero-banner">
+      <image src="/static/learn-banner.jpg" class="banner-img" mode="aspectFill" />
+      <view class="banner-overlay">
+        <text class="banner-title">智慧护理学习中心</text>
+        <text class="banner-subtitle">专业护理知识 · 助力终身学习</text>
+      </view>
+    </view>
+
     <!-- 分类 Tab 横向滚动 -->
     <scroll-view class="category-tabs" scroll-x show-scrollbar="false">
       <view class="category-list">
@@ -50,62 +59,47 @@
           class="content-card"
           @tap="goDetail(item)"
         >
-          <!-- 视频类型 contentType=2 -->
-          <view v-if="item.contentType === 2" class="card-video">
-            <view class="video-cover">
-              <image v-if="item.coverImage" :src="item.coverImage" class="cover-img" mode="aspectFill" />
-              <view v-else class="cover-placeholder">
-                <text class="cover-icon">▶</text>
-              </view>
-              <view class="video-duration" v-if="item.duration">
-                <text>{{ formatDuration(item.duration) }}</text>
-              </view>
-              <view class="video-play-icon">
-                <text>▶</text>
-              </view>
+          <!-- 左侧封面区 -->
+          <view class="card-cover" :class="'cover-type-' + item.contentType">
+            <image
+              v-if="item.coverImage"
+              :src="item.coverImage"
+              class="cover-img"
+              mode="aspectFill"
+            />
+            <view v-else class="cover-placeholder">
+              <text class="cover-icon">{{ getTypeIcon(item.contentType) }}</text>
             </view>
-            <view class="card-body">
-              <text class="card-title text-ellipsis-2">{{ item.title }}</text>
-              <view class="card-meta">
-                <text class="meta-tag tag-video">视频</text>
-                <text class="meta-text">{{ formatViewCount(item.viewCount) }}次学习</text>
-              </view>
+            <!-- 类型标签 -->
+            <view class="cover-badge">
+              <text>{{ getTypeLabel(item.contentType) }}</text>
+            </view>
+            <!-- 视频时长角标 -->
+            <view v-if="item.contentType === 2 && item.duration" class="cover-duration">
+              <text>▶ {{ formatDuration(item.duration) }}</text>
             </view>
           </view>
 
-          <!-- 文章类型 contentType=1 -->
-          <view v-else-if="item.contentType === 1" class="card-article">
-            <view class="article-body">
-              <text class="card-title text-ellipsis-2">{{ item.title }}</text>
-              <text class="card-summary text-ellipsis-2">{{ item.summary || stripHtml(item.content) }}</text>
-              <view class="card-meta">
-                <text class="meta-tag tag-article">文章</text>
-                <text class="meta-text">{{ formatViewCount(item.viewCount) }}次阅读</text>
-                <text class="meta-text meta-time">{{ formatTime(item.createTime) }}</text>
-              </view>
-            </view>
-            <image v-if="item.coverImage" :src="item.coverImage" class="article-thumb" mode="aspectFill" />
-          </view>
+          <!-- 右侧内容区 -->
+          <view class="card-content">
+            <!-- 标题 -->
+            <text class="card-title text-ellipsis-2">{{ item.title }}</text>
+            <!-- 简介 -->
+            <text v-if="item.contentType !== 2" class="card-summary text-ellipsis-1">
+              {{ item.summary || stripHtml(item.content) }}
+            </text>
+            <text v-else class="card-summary text-ellipsis-1">点击观看视频课程</text>
 
-          <!-- PPT/课件类型 contentType=3 -->
-          <view v-else-if="item.contentType === 3" class="card-ppt">
-            <view class="ppt-icon-wrapper">
-              <text class="ppt-icon">📊</text>
-            </view>
-            <view class="card-body">
-              <text class="card-title text-ellipsis-2">{{ item.title }}</text>
-              <view class="card-meta">
-                <text class="meta-tag tag-ppt">课件</text>
-                <text class="meta-text">{{ formatViewCount(item.viewCount) }}次学习</text>
-                <text class="meta-text meta-time">{{ formatTime(item.createTime) }}</text>
+            <!-- 底部元数据行（浅灰底色包裹） -->
+            <view class="card-meta-bar">
+              <view class="meta-item">
+                <text class="meta-icon">{{ item.contentType === 1 ? '👁' : '▶' }}</text>
+                <text class="meta-text">{{ formatViewCount(item.viewCount) }}次{{ item.contentType === 1 ? '阅读' : '学习' }}</text>
               </view>
-            </view>
-          </view>
-
-          <!-- 默认类型 -->
-          <view v-else class="card-default">
-            <view class="card-body">
-              <text class="card-title text-ellipsis-2">{{ item.title }}</text>
+              <view v-if="item.createTime" class="meta-item meta-time">
+                <text class="meta-icon">🕐</text>
+                <text class="meta-text">{{ formatTime(item.createTime) }}</text>
+              </view>
             </view>
           </view>
         </view>
@@ -270,6 +264,22 @@ const goDetail = (item) => {
 }
 
 /**
+ * 获取类型图标（用于无封面时的占位）
+ */
+const getTypeIcon = (type) => {
+  const map = { 1: '📄', 2: '🎬', 3: '📊' }
+  return map[type] || '📄'
+}
+
+/**
+ * 获取类型标签文字
+ */
+const getTypeLabel = (type) => {
+  const map = { 1: '文章', 2: '视频', 3: '课件' }
+  return map[type] || '内容'
+}
+
+/**
  * 格式化时长
  */
 const formatDuration = (seconds) => {
@@ -320,292 +330,360 @@ onShow(() => {
 </script>
 
 <style lang="scss" scoped>
+/* ==================== 设计变量 ==================== */
+$primary: #0EA5E9;           // 医护浅蓝（主色）
+$primary-dark: #0284C7;      // 主色深
+$primary-light: #E0F2FE;      // 主色浅底
+$bg-page: #F8FAFC;           // 全局浅灰背景
+$bg-card: #FFFFFF;
+$text-title: #1E293B;        // 标题深色
+$text-body: #475569;         // 正文（替代纯黑）
+$text-muted: #94A3B8;         // 次要文字
+$border-light: #E2E8F0;
+$shadow-card: 0 8rpx 12rpx -4rpx rgba(15, 23, 42, 0.05);
+$shadow-hover: 0 16rpx 32rpx -8rpx rgba(14, 165, 233, 0.18);
+$radius-card: 24rpx;         // 12px
+$radius-pill: 999rpx;
+
 .learn-page {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background: #f5f5f5;
+  background: $bg-page;
 }
 
-/* 搜索栏 */
+/* ==================== 搜索栏 ==================== */
 .search-bar {
-  padding: 16rpx 24rpx;
-  background: #fff;
+  padding: 20rpx 32rpx 16rpx;
+  background: $bg-card;
 
   .search-input-wrapper {
     display: flex;
     align-items: center;
-    background: #f0f2f5;
-    border-radius: 36rpx;
-    padding: 0 24rpx;
-    height: 72rpx;
+    background: $bg-page;
+    border-radius: $radius-pill;
+    padding: 0 28rpx;
+    height: 80rpx;
+    border: 2rpx solid transparent;
+    box-shadow: 0 4rpx 12rpx rgba(15, 23, 42, 0.04);
+    transition: all 0.3s ease;
+
+    &:focus-within {
+      background: $bg-card;
+      border-color: $primary;
+      box-shadow: 0 4rpx 20rpx rgba(14, 165, 233, 0.12);
+    }
 
     .search-icon {
-      font-size: 28rpx;
-      margin-right: 12rpx;
-      opacity: 0.5;
+      font-size: 30rpx;
+      margin-right: 14rpx;
+      color: $primary;
+      opacity: 0.85;
     }
 
     .search-input {
       flex: 1;
-      height: 72rpx;
+      height: 80rpx;
       font-size: 28rpx;
+      color: $text-body;
     }
 
     .search-placeholder {
-      color: #999;
+      color: $text-muted;
       font-size: 28rpx;
     }
 
     .clear-icon {
       font-size: 28rpx;
-      color: #ccc;
+      color: $text-muted;
       padding: 10rpx;
+      transition: color 0.2s;
+
+      &:active {
+        color: $primary;
+      }
     }
   }
 }
 
-/* 分类 Tab */
+/* ==================== 横幅 Banner ==================== */
+.hero-banner {
+  position: relative;
+  width: 100%;
+  height: 240rpx;
+  overflow: hidden;
+  margin: 16rpx 0 8rpx;
+
+  .banner-img {
+    width: 100%;
+    height: 100%;
+  }
+
+  .banner-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(2, 132, 199, 0.78), rgba(14, 165, 233, 0.55));
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0 40rpx;
+
+    .banner-title {
+      font-size: 40rpx;
+      font-weight: 700;
+      color: #FFFFFF;
+      text-shadow: 0 2rpx 12rpx rgba(2, 132, 199, 0.4);
+      letter-spacing: 2rpx;
+    }
+
+    .banner-subtitle {
+      font-size: 24rpx;
+      color: rgba(255, 255, 255, 0.95);
+      margin-top: 12rpx;
+      letter-spacing: 1rpx;
+    }
+  }
+}
+
+/* ==================== 分类标签（药丸状按钮） ==================== */
 .category-tabs {
   white-space: nowrap;
-  background: #fff;
-  border-bottom: 1rpx solid #f0f0f0;
-  height: 88rpx;
+  background: $bg-card;
+  height: 96rpx;
 
   .category-list {
     display: inline-flex;
     align-items: center;
-    height: 88rpx;
-    padding: 0 24rpx;
+    height: 96rpx;
+    padding: 0 32rpx;
 
     .category-item {
       display: inline-flex;
       flex-direction: column;
       align-items: center;
-      margin-right: 48rpx;
+      margin-right: 20rpx;
       position: relative;
-      height: 88rpx;
+      height: 64rpx;
       justify-content: center;
+      padding: 0 28rpx;
+      border-radius: $radius-pill;
+      background: #F1F5F9;
+      transition: all 0.3s ease;
 
       .category-text {
-        font-size: 28rpx;
-        color: #666;
-        transition: color 0.3s;
+        font-size: 26rpx;
+        color: $text-body;
+        transition: all 0.3s ease;
       }
 
-      &.active .category-text {
-        color: #2979ff;
-        font-weight: bold;
-        font-size: 30rpx;
+      /* 选中态：主色底白字 */
+      &.active {
+        background: $primary;
+        box-shadow: 0 6rpx 16rpx rgba(14, 165, 233, 0.3);
+
+        .category-text {
+          color: #FFFFFF;
+          font-weight: 600;
+          font-size: 28rpx;
+        }
+      }
+
+      /* hover 过渡（H5） */
+      &:not(.active):active {
+        background: #E2E8F0;
       }
 
       .category-underline {
-        position: absolute;
-        bottom: 8rpx;
-        width: 48rpx;
-        height: 6rpx;
-        background: #2979ff;
-        border-radius: 3rpx;
+        display: none;
       }
     }
   }
 }
 
-/* 内容滚动区 */
+/* ==================== 内容滚动区 ==================== */
 .content-scroll {
   flex: 1;
   overflow: hidden;
 }
 
 .content-list {
-  padding: 20rpx 24rpx;
+  padding: 20rpx 32rpx 40rpx;
 }
 
-/* 内容卡片通用 */
+/* ==================== 课程卡片（核心 - 左图右文统一布局） ==================== */
 .content-card {
-  background: #fff;
-  border-radius: 16rpx;
-  margin-bottom: 20rpx;
+  display: flex;
+  background: $bg-card;
+  border-radius: $radius-card;
+  margin-bottom: 24rpx;
   overflow: hidden;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+  box-shadow: $shadow-card;
+  transition: all 0.3s ease;
+  cursor: pointer;
 
+  /* H5 悬停效果 */
+  &:hover {
+    transform: translateY(-8rpx);
+    box-shadow: $shadow-hover;
+  }
+
+  /* 移动端按下效果 */
   &:active {
-    opacity: 0.85;
+    opacity: 0.95;
+    transform: translateY(-4rpx);
+    box-shadow: $shadow-hover;
   }
 }
 
-/* 视频卡片 */
-.card-video {
-  .video-cover {
-    position: relative;
+/* 左侧封面区 */
+.card-cover {
+  position: relative;
+  width: 220rpx;
+  height: 200rpx;
+  flex-shrink: 0;
+  background: #1E293B;
+  overflow: hidden;
+
+  .cover-img {
     width: 100%;
-    height: 360rpx;
-    background: #000;
-
-    .cover-img {
-      width: 100%;
-      height: 100%;
-    }
-
-    .cover-placeholder {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(135deg, #2c3e50, #3498db);
-
-      .cover-icon {
-        font-size: 80rpx;
-        color: rgba(255, 255, 255, 0.6);
-      }
-    }
-
-    .video-duration {
-      position: absolute;
-      right: 16rpx;
-      bottom: 16rpx;
-      background: rgba(0, 0, 0, 0.7);
-      color: #fff;
-      font-size: 22rpx;
-      padding: 4rpx 12rpx;
-      border-radius: 6rpx;
-    }
-
-    .video-play-icon {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 80rpx;
-      height: 80rpx;
-      border-radius: 50%;
-      background: rgba(0, 0, 0, 0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      text {
-        color: #fff;
-        font-size: 32rpx;
-        margin-left: 6rpx;
-      }
-    }
-  }
-}
-
-/* 文章卡片 */
-.card-article {
-  display: flex;
-  padding: 24rpx;
-
-  .article-body {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    margin-right: 20rpx;
-
-    .card-summary {
-      font-size: 26rpx;
-      color: #888;
-      line-height: 1.5;
-      margin-top: 10rpx;
-    }
+    height: 100%;
   }
 
-  .article-thumb {
-    width: 180rpx;
-    height: 130rpx;
-    border-radius: 12rpx;
-    flex-shrink: 0;
-  }
-}
-
-/* PPT卡片 */
-.card-ppt {
-  display: flex;
-  align-items: center;
-  padding: 24rpx;
-
-  .ppt-icon-wrapper {
-    width: 100rpx;
-    height: 100rpx;
-    border-radius: 16rpx;
-    background: linear-gradient(135deg, #ff9800, #f57c00);
+  /* 无封面时的渐变占位 */
+  .cover-placeholder {
+    width: 100%;
+    height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-right: 24rpx;
-    flex-shrink: 0;
+    background: linear-gradient(135deg, #0EA5E9, #0284C7);
 
-    .ppt-icon {
-      font-size: 48rpx;
+    .cover-icon {
+      font-size: 72rpx;
+      opacity: 0.85;
+    }
+  }
+
+  /* 不同类型封面渐变色 */
+  &.cover-type-1 .cover-placeholder {
+    background: linear-gradient(135deg, #0EA5E9, #0284C7);
+  }
+
+  &.cover-type-2 .cover-placeholder {
+    background: linear-gradient(135deg, #6366F1, #4F46E5);
+  }
+
+  &.cover-type-3 .cover-placeholder {
+    background: linear-gradient(135deg, #14B8A6, #0D9488);
+  }
+
+  /* 类型标签角标 */
+  .cover-badge {
+    position: absolute;
+    top: 12rpx;
+    left: 12rpx;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(4rpx);
+    padding: 4rpx 14rpx;
+    border-radius: $radius-pill;
+
+    text {
+      font-size: 20rpx;
+      color: #1E293B;
+      font-weight: 600;
+    }
+  }
+
+  /* 视频时长角标 */
+  .cover-duration {
+    position: absolute;
+    bottom: 12rpx;
+    right: 12rpx;
+    background: rgba(15, 23, 42, 0.72);
+    backdrop-filter: blur(4rpx);
+    padding: 4rpx 12rpx;
+    border-radius: 8rpx;
+
+    text {
+      font-size: 20rpx;
+      color: #fff;
     }
   }
 }
 
-/* 卡片内容区域 */
-.card-body {
-  padding: 24rpx;
+/* 右侧内容区 */
+.card-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 24rpx 28rpx;
+  min-width: 0;
+  min-height: 200rpx;
 
   .card-title {
-    font-size: 30rpx;
+    font-size: 32rpx;
     font-weight: 600;
-    color: #333;
+    color: $text-title;
     line-height: 1.4;
+    word-break: break-all;
+  }
+
+  .card-summary {
+    font-size: 26rpx;
+    color: $text-muted;
+    line-height: 1.5;
+    margin-top: 10rpx;
   }
 }
 
-/* 卡片元信息 */
-.card-meta {
+/* ==================== 元信息行（浅灰底色包裹，配线性图标） ==================== */
+.card-meta-bar {
   display: flex;
   align-items: center;
   margin-top: 16rpx;
-  flex-wrap: wrap;
+  padding: 10rpx 16rpx;
+  background: #F1F5F9;
+  border-radius: 12rpx;
 
-  .meta-tag {
-    font-size: 20rpx;
-    padding: 4rpx 12rpx;
-    border-radius: 6rpx;
-    margin-right: 12rpx;
-    background: #e3f2fd;
-    color: #2979ff;
+  .meta-item {
+    display: flex;
+    align-items: center;
+    margin-right: 20rpx;
 
-    &.tag-video {
-      background: #fce4ec;
-      color: #e91e63;
+    .meta-icon {
+      font-size: 22rpx;
+      margin-right: 6rpx;
+      opacity: 0.7;
     }
 
-    &.tag-article {
-      background: #e8f5e9;
-      color: #4caf50;
+    .meta-text {
+      font-size: 22rpx;
+      color: $text-muted;
     }
 
-    &.tag-ppt {
-      background: #fff3e0;
-      color: #ff9800;
+    &.meta-time {
+      margin-left: auto;
+      margin-right: 0;
+
+      .meta-text {
+        color: #CBD5E1;
+      }
     }
-  }
-
-  .meta-text {
-    font-size: 22rpx;
-    color: #999;
-    margin-right: 16rpx;
-  }
-
-  .meta-time {
-    margin-left: auto;
   }
 }
 
-/* 加载与空状态 */
+/* ==================== 加载与空状态 ==================== */
 .loading-more {
   text-align: center;
-  padding: 30rpx 0;
+  padding: 40rpx 0;
 
   .loading-text {
     font-size: 24rpx;
-    color: #999;
+    color: $text-muted;
   }
 }
 
@@ -613,17 +691,32 @@ onShow(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 120rpx 0;
+  padding: 140rpx 0;
 
   .empty-icon-text {
     font-size: 100rpx;
-    margin-bottom: 20rpx;
-    opacity: 0.4;
+    margin-bottom: 24rpx;
+    opacity: 0.3;
   }
 
   .empty-text {
     font-size: 28rpx;
-    color: #999;
+    color: $text-muted;
   }
+}
+
+/* ==================== 文本省略工具类 ==================== */
+.text-ellipsis-2 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.text-ellipsis-1 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 </style>

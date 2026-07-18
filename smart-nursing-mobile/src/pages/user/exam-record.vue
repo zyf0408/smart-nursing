@@ -31,26 +31,34 @@
       <view v-if="list.length > 0" class="record-list">
         <view
           v-for="item in list"
-          :key="item.id"
+          :key="item.recordId"
           class="record-card"
           @tap="goResult(item)"
         >
           <view class="card-header">
-            <text class="card-title text-ellipsis">{{ item.examTitle || item.title }}</text>
-            <view class="card-score" :class="{ passed: item.score >= item.passScore, failed: item.score < item.passScore }">
-              <text class="score-value">{{ item.score }}</text>
+            <view class="card-title-area">
+              <text class="card-title text-ellipsis">{{ item.examName || '未知考试' }}</text>
+              <view class="card-tags">
+                <text class="tag-exam-type">护理考试</text>
+                <text v-if="item.isPass === 1" class="tag-pass">已通过</text>
+                <text v-else class="tag-fail">未通过</text>
+              </view>
+            </view>
+            <view class="card-score" :class="{ passed: item.isPass === 1, failed: item.isPass !== 1 }">
+              <text class="score-value">{{ item.score || 0 }}</text>
               <text class="score-label">分</text>
             </view>
           </view>
           <view class="card-body">
             <view class="card-info">
-              <text class="info-item">总分: {{ item.totalScore }}</text>
-              <text class="info-item">及格分: {{ item.passScore }}</text>
-              <text class="info-item">用时: {{ formatDuration(item.duration) }}</text>
+              <text class="info-item">总分: {{ item.totalScore || 100 }}</text>
+              <text class="info-item">及格分: {{ item.passScore || 60 }}</text>
+              <text class="info-item">用时: {{ formatDuration(item.examDuration) }}</text>
+              <text class="info-item">第{{ item.attemptCount || 1 }}次</text>
             </view>
             <view class="card-status">
-              <text class="status-tag" :class="{ 'tag-pass': item.score >= item.passScore, 'tag-fail': item.score < item.passScore }">
-                {{ item.score >= item.passScore ? '通过' : '未通过' }}
+              <text class="status-tag" :class="{ 'tag-pass': item.isPass === 1, 'tag-fail': item.isPass !== 1 }">
+                {{ item.isPass === 1 ? '通过' : '未通过' }}
               </text>
               <text class="exam-time">{{ formatDateTime(item.submitTime) }}</text>
             </view>
@@ -99,12 +107,11 @@ const loadList = async (reset = false) => {
     const total = res.total || 0
     if (list.value.length >= total || items.length < pageSize) { noMore.value = true } else { page.value++ }
 
-    // 更新统计
-    if (res.stats) Object.assign(stats, res.stats)
-    if (reset && list.value.length > 0 && !res.stats) {
+    // 更新统计 - 使用 isPass 字段判断
+    if (reset) {
       stats.total = total || list.value.length
-      stats.passed = list.value.filter(i => i.score >= i.passScore).length
-      stats.failed = list.value.filter(i => i.score < i.passScore).length
+      stats.passed = list.value.filter(i => i.isPass === 1).length
+      stats.failed = list.value.filter(i => i.isPass !== 1).length
       const sum = list.value.reduce((acc, i) => acc + (i.score || 0), 0)
       stats.avgScore = list.value.length > 0 ? Math.round(sum / list.value.length) : 0
     }
@@ -117,13 +124,15 @@ const loadList = async (reset = false) => {
 }
 
 const goResult = (item) => {
-  uni.navigateTo({ url: `/pages/exam/exam-result?recordId=${item.id || item.recordId}` })
+  uni.navigateTo({ url: `/pages/exam/exam-result?recordId=${item.recordId}` })
 }
 
-const formatDuration = (seconds) => {
-  if (!seconds) return '未知'
-  const min = Math.floor(seconds / 60)
-  return `${min}分钟`
+const formatDuration = (minutes) => {
+  if (!minutes) return '未知'
+  if (minutes < 60) return `${minutes}分钟`
+  const hours = Math.floor(minutes / 60)
+  const min = minutes % 60
+  return `${hours}小时${min}分`
 }
 
 const formatDateTime = (time) => {
@@ -145,54 +154,62 @@ onShow(() => { loadList(true) })
 </script>
 
 <style lang="scss" scoped>
-.exam-record-page { height: 100vh; background: #f5f5f5; display: flex; flex-direction: column; }
+.exam-record-page { height: 100vh; background: #F7F4EF; display: flex; flex-direction: column; }
 
 .stats-overview {
-  display: flex; background: #fff; padding: 28rpx 0; border-bottom: 1rpx solid #f0f0f0;
+  display: flex; background: #FFFFFF; padding: 28rpx 0; border-bottom: 1rpx solid #E8E4DE;
   .overview-item { flex: 1; display: flex; flex-direction: column; align-items: center;
-    .overview-value { font-size: 36rpx; font-weight: bold; color: #2979ff; }
-    .overview-pass { color: #4caf50; }
-    .overview-fail { color: #f44336; }
-    .overview-avg { color: #ff9800; }
-    .overview-label { font-size: 22rpx; color: #999; margin-top: 6rpx; }
+    .overview-value { font-size: 36rpx; font-weight: bold; color: #93B4B8; }
+    .overview-pass { color: #95BB92; }
+    .overview-fail { color: #D17575; }
+    .overview-avg { color: #C77A60; }
+    .overview-label { font-size: 22rpx; color: #989FA6; margin-top: 6rpx; }
   }
 }
 
 .record-scroll { flex: 1; overflow: hidden; }
-.record-list { padding: 20rpx 24rpx; }
+.record-list { padding: 20rpx 32rpx; }
 
 .record-card {
-  background: #fff; border-radius: 16rpx; padding: 24rpx; margin-bottom: 16rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
-  &:active { opacity: 0.85; }
+  background: #FFFFFF; border-radius: 24rpx; padding: 28rpx; margin-bottom: 16rpx;
+  box-shadow: 0 2rpx 16rpx rgba(58, 76, 86, 0.06);
+  transition: all 0.4s ease-out;
+  &:active { opacity: 0.9; transform: translateY(1rpx); }
 
   .card-header { display: flex; justify-content: space-between; align-items: flex-start;
-    .card-title { flex: 1; font-size: 30rpx; font-weight: 600; color: #333; margin-right: 20rpx; }
+    .card-title-area { flex: 1; margin-right: 20rpx;
+      .card-title { font-size: 30rpx; font-weight: 600; color: #3A4C56; display: block; }
+      .card-tags { display: flex; margin-top: 8rpx;
+        .tag-exam-type { font-size: 18rpx; padding: 2rpx 12rpx; border-radius: 8rpx; background: #D1E4F5; color: #84A7C6; margin-right: 8rpx; }
+        .tag-pass { font-size: 18rpx; padding: 2rpx 12rpx; border-radius: 8rpx; background: #E0EDE0; color: #95BB92; }
+        .tag-fail { font-size: 18rpx; padding: 2rpx 12rpx; border-radius: 8rpx; background: #F5E0E2; color: #D17575; }
+      }
+    }
     .card-score { display: flex; align-items: baseline;
       .score-value { font-size: 40rpx; font-weight: bold; }
       .score-label { font-size: 22rpx; margin-left: 4rpx; }
-      &.passed .score-value, &.passed .score-label { color: #4caf50; }
-      &.failed .score-value, &.failed .score-label { color: #f44336; }
+      &.passed .score-value, &.passed .score-label { color: #95BB92; }
+      &.failed .score-value, &.failed .score-label { color: #D17575; }
     }
   }
 
   .card-body { margin-top: 16rpx;
     .card-info { display: flex; flex-wrap: wrap;
-      .info-item { font-size: 24rpx; color: #999; margin-right: 24rpx; }
+      .info-item { font-size: 24rpx; color: #989FA6; margin-right: 24rpx; }
     }
     .card-status { display: flex; justify-content: space-between; align-items: center; margin-top: 12rpx;
-      .status-tag { font-size: 22rpx; padding: 4rpx 14rpx; border-radius: 6rpx;
-        &.tag-pass { background: #e8f5e9; color: #4caf50; }
-        &.tag-fail { background: #ffebee; color: #f44336; }
+      .status-tag { font-size: 22rpx; padding: 4rpx 14rpx; border-radius: 8rpx;
+        &.tag-pass { background: #E0EDE0; color: #95BB92; }
+        &.tag-fail { background: #F5E0E2; color: #D17575; }
       }
-      .exam-time { font-size: 22rpx; color: #ccc; }
+      .exam-time { font-size: 22rpx; color: #D8B7BC; }
     }
   }
 }
 
-.loading-more { text-align: center; padding: 30rpx 0; .loading-text { font-size: 24rpx; color: #999; } }
+.loading-more { text-align: center; padding: 30rpx 0; .loading-text { font-size: 24rpx; color: #989FA6; } }
 .empty-state { display: flex; flex-direction: column; align-items: center; padding: 150rpx 0;
-  .empty-icon-text { font-size: 100rpx; margin-bottom: 20rpx; opacity: 0.4; }
-  .empty-text { font-size: 28rpx; color: #999; }
+  .empty-icon-text { font-size: 100rpx; margin-bottom: 20rpx; opacity: 0.35; }
+  .empty-text { font-size: 28rpx; color: #989FA6; }
 }
 </style>

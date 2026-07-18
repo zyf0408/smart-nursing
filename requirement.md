@@ -1838,7 +1838,8 @@ public class AIController {
     static class TemplateRequest { private String topic; private String style; }
 
     @Data
-    static class ChatRequest { private String sessionId; private String message; }
+    static class ChatRequest { private String sessionId; private String message
+    ; }
 
     @Data
     static class ChatWithSystemRequest { private String sessionId; private String systemPrompt; private String message; }

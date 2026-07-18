@@ -215,7 +215,7 @@ const http = {
     const token = uni.getStorageSync('token')
     const header = {}
     if (token) {
-      header['Authorization'] = `Bearer ${token}`
+      header['token'] = token
     }
     return new Promise((resolve, reject) => {
       uni.uploadFile({

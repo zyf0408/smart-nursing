@@ -11,22 +11,25 @@
       <view v-if="list.length > 0" class="record-list">
         <view
           v-for="item in list"
-          :key="item.id"
+          :key="item.recordId"
           class="record-card"
           @tap="goDetail(item)"
         >
           <view class="record-left">
-            <view class="record-type-icon" :class="'type-' + item.type">
-              <text v-if="item.type === 'video'">▶</text>
-              <text v-else-if="item.type === 'ppt'">📊</text>
+            <view class="record-type-icon" :class="'type-' + item.contentType">
+              <text v-if="item.contentType === 2">▶</text>
+              <text v-else-if="item.contentType === 3">📊</text>
               <text v-else>📄</text>
             </view>
           </view>
           <view class="record-center">
-            <text class="record-title text-ellipsis">{{ item.title }}</text>
+            <view class="record-title-row">
+              <text class="record-title text-ellipsis">{{ item.title || '未知内容' }}</text>
+              <text class="type-badge" :class="'badge-' + item.contentType">{{ item.typeName }}</text>
+            </view>
             <view class="record-meta">
-              <text class="meta-text">学习时长: {{ formatDuration(item.duration) }}</text>
-              <text class="meta-text meta-time">{{ formatTime(item.studyTime || item.createTime) }}</text>
+              <text class="meta-text">学习时长: {{ formatDuration(item.studyDuration) }}</text>
+              <text class="meta-text meta-time">{{ formatTime(item.lastStudyTime) }}</text>
             </view>
             <view class="record-progress">
               <view class="progress-bar">
@@ -96,12 +99,12 @@ const loadList = async (reset = false) => {
 
 const goDetail = (item) => {
   let url = ''
-  if (item.type === 'video') {
-    url = `/pages/learn/video-detail?id=${item.contentId || item.id}`
-  } else if (item.type === 'ppt') {
-    url = `/pages/learn/ppt-detail?id=${item.contentId || item.id}`
+  if (item.contentType === 2) {
+    url = `/pages/learn/video-detail?id=${item.contentId}`
+  } else if (item.contentType === 3) {
+    url = `/pages/learn/ppt-detail?id=${item.contentId}`
   } else {
-    url = `/pages/learn/article-detail?id=${item.contentId || item.id}`
+    url = `/pages/learn/article-detail?id=${item.contentId}`
   }
   uni.navigateTo({ url })
 }
@@ -140,47 +143,55 @@ onShow(() => { loadList(true) })
 </script>
 
 <style lang="scss" scoped>
-.record-page { height: 100vh; background: #f5f5f5; }
+.record-page { height: 100vh; background: #F7F4EF; }
 .record-scroll { height: 100%; }
-.record-list { padding: 20rpx 24rpx; }
+.record-list { padding: 20rpx 32rpx; }
 
 .record-card {
   display: flex;
-  background: #fff;
-  border-radius: 16rpx;
-  padding: 24rpx;
+  background: #FFFFFF;
+  border-radius: 24rpx;
+  padding: 28rpx;
   margin-bottom: 16rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
-  &:active { opacity: 0.85; }
+  box-shadow: 0 2rpx 16rpx rgba(58, 76, 86, 0.06);
+  transition: all 0.4s ease-out;
+  &:active { opacity: 0.9; transform: translateY(1rpx); }
 
   .record-left { margin-right: 20rpx;
     .record-type-icon {
-      width: 80rpx; height: 80rpx; border-radius: 16rpx;
+      width: 80rpx; height: 80rpx; border-radius: 20rpx;
       display: flex; align-items: center; justify-content: center; font-size: 36rpx;
-      &.type-video { background: #fce4ec; color: #e91e63; }
-      &.type-ppt { background: #fff3e0; color: #ff9800; }
-      &.type-article { background: #e8f5e9; color: #4caf50; }
+      &.type-2 { background: #F5E0E2; color: #D8B7BC; }
+      &.type-3 { background: #F5E6DA; color: #D39468; }
+      &.type-1 { background: #E0EDE0; color: #95BB92; }
     }
   }
 
   .record-center { flex: 1; overflow: hidden;
-    .record-title { font-size: 28rpx; color: #333; font-weight: 500; }
+    .record-title-row { display: flex; align-items: center; }
+    .record-title { font-size: 28rpx; color: #3A4C56; font-weight: 500; flex: 1; }
+    .type-badge {
+      font-size: 18rpx; padding: 2rpx 12rpx; border-radius: 8rpx; margin-left: 12rpx; flex-shrink: 0;
+      &.badge-1 { background: #E0EDE0; color: #95BB92; }
+      &.badge-2 { background: #F5E0E2; color: #D8B7BC; }
+      &.badge-3 { background: #F5E6DA; color: #D39468; }
+    }
     .record-meta { display: flex; margin-top: 10rpx;
-      .meta-text { font-size: 22rpx; color: #999; margin-right: 20rpx; }
+      .meta-text { font-size: 22rpx; color: #989FA6; margin-right: 20rpx; }
       .meta-time { margin-left: auto; }
     }
     .record-progress { display: flex; align-items: center; margin-top: 12rpx;
-      .progress-bar { flex: 1; height: 10rpx; background: #f0f0f0; border-radius: 5rpx; overflow: hidden; margin-right: 12rpx;
-        .progress-inner { height: 100%; background: #2979ff; border-radius: 5rpx; transition: width 0.3s; }
+      .progress-bar { flex: 1; height: 10rpx; background: #D1E4F5; border-radius: 5rpx; overflow: hidden; margin-right: 12rpx;
+        .progress-inner { height: 100%; background: #C77A60; border-radius: 5rpx; transition: width 0.4s ease-out; }
       }
-      .progress-text { font-size: 22rpx; color: #2979ff; font-weight: 600; }
+      .progress-text { font-size: 22rpx; color: #93B4B8; font-weight: 600; }
     }
   }
 }
 
-.loading-more { text-align: center; padding: 30rpx 0; .loading-text { font-size: 24rpx; color: #999; } }
+.loading-more { text-align: center; padding: 30rpx 0; .loading-text { font-size: 24rpx; color: #989FA6; } }
 .empty-state { display: flex; flex-direction: column; align-items: center; padding: 150rpx 0;
-  .empty-icon-text { font-size: 100rpx; margin-bottom: 20rpx; opacity: 0.4; }
-  .empty-text { font-size: 28rpx; color: #999; }
+  .empty-icon-text { font-size: 100rpx; margin-bottom: 20rpx; opacity: 0.35; }
+  .empty-text { font-size: 28rpx; color: #989FA6; }
 }
 </style>

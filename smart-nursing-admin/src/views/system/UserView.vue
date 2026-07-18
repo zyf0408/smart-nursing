@@ -11,6 +11,13 @@
           @keyup.enter="handleSearch"
         />
         <el-input
+          v-model="queryParams.realName"
+          placeholder="姓名"
+          clearable
+          style="width: 180px"
+          @keyup.enter="handleSearch"
+        />
+        <el-input
           v-model="queryParams.phone"
           placeholder="手机号"
           clearable
@@ -130,6 +137,7 @@ const queryParams = reactive({
   pageNum: 1,
   pageSize: 10,
   username: '',
+  realName: '',
   phone: ''
 })
 
@@ -155,6 +163,7 @@ const handleSearch = () => {
 
 const handleReset = () => {
   queryParams.username = ''
+  queryParams.realName = ''
   queryParams.phone = ''
   queryParams.pageNum = 1
   loadData()
