@@ -281,79 +281,115 @@ uni-modal {
 /* 遮罩层 z-index 较低 */
 uni-modal .uni-mask {
   z-index: 1 !important;
+  /* 遮罩更柔和，带轻微模糊（毛玻璃感） */
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
 }
-/* 内容容器 z-index 较高，确保在遮罩之上，可接收点击 */
+/* === 内容容器：极浅灰白渐变 + 大圆角 + 柔和大范围阴影 === */
 uni-modal .uni-modal {
   position: relative !important;
   z-index: 2 !important;
-  /* 明显的白色背景 + 圆角 + 阴影，避免和遮罩混为一体 */
-  background-color: #ffffff !important;
-  border-radius: 24rpx !important;
-  box-shadow: 0 16rpx 48rpx rgba(0, 0, 0, 0.25) !important;
+  /* 纯白到极浅灰的渐变背景，干净有质感 */
+  background: linear-gradient(180deg, #ffffff 0%, #fafbfc 100%) !important;
+  /* 大圆角 */
+  border-radius: 32rpx !important;
+  /* 柔和、大范围阴影：分层投影模拟微拟物 */
+  box-shadow:
+    0 4rpx 8rpx rgba(15, 23, 42, 0.04),
+    0 16rpx 40rpx rgba(15, 23, 42, 0.12),
+    0 32rpx 80rpx rgba(15, 23, 42, 0.08) !important;
   overflow: hidden !important;
-  width: 600rpx !important;
-  max-width: 85vw !important;
+  width: 620rpx !important;
+  max-width: 86vw !important;
+  /* 去除生硬边框 */
+  border: none !important;
+  padding: 8rpx 0 0 !important;
 }
-/* 标题加粗 */
+/* === 标题：居中，深灰护眼 === */
+uni-modal .uni-modal__hd {
+  padding: 48rpx 40rpx 12rpx !important;
+  text-align: center !important;
+}
 uni-modal .uni-modal__title {
   font-size: 34rpx !important;
   font-weight: 600 !important;
-  color: #1a1a1a !important;
+  color: #1f2937 !important;
+  letter-spacing: 1rpx;
 }
-/* 正文文字颜色 */
+/* === 正文：居中，字重500，深灰护眼 === */
 uni-modal .uni-modal__bd {
-  color: #333333 !important;
+  color: #4b5563 !important;
   font-size: 30rpx !important;
-  padding: 24rpx 40rpx !important;
+  font-weight: 500 !important;
+  text-align: center !important;
+  padding: 8rpx 48rpx 48rpx !important;
+  line-height: 1.6 !important;
 }
-/* 按钮区域：flex 布局 + 间距，移除传统分隔线，采用现代卡片式按钮组 */
+/* === 按钮区域：flex + 间距，移除传统分隔线 === */
 uni-modal .uni-modal__ft {
   display: flex !important;
-  gap: 20rpx !important;
-  padding: 16rpx 40rpx 40rpx !important;
+  gap: 24rpx !important;
+  padding: 0 48rpx 48rpx !important;
   border-top: none !important;
 }
-/* 按钮基础样式：胶囊形圆角 + 过渡动效 */
+/* === 按钮基础：胶囊形 + 过渡动效 === */
 uni-modal .uni-modal__btn {
   flex: 1 !important;
-  height: 88rpx !important;
-  line-height: 88rpx !important;
+  height: 92rpx !important;
+  line-height: 92rpx !important;
   padding: 0 !important;
-  border-radius: 44rpx !important;
+  border-radius: 46rpx !important;
   font-size: 32rpx !important;
   font-weight: 500 !important;
   text-align: center !important;
   cursor: pointer !important;
   user-select: none !important;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  letter-spacing: 2rpx;
+  transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
-/* 次按钮（取消）：浅灰背景，低调但可识别 */
+/* === 次按钮（取消）：极简幽灵按钮，浅灰文字 === */
 uni-modal .uni-modal__btn_default {
-  background-color: #f2f3f5 !important;
-  color: #646566 !important;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04) !important;
+  background: transparent !important;
+  color: #9ca3af !important;
+  box-shadow: none !important;
 }
-/* 主按钮（开始）：科技蓝渐变色 + 柔和投影 */
-uni-modal .uni-modal__btn_primary {
-  background: linear-gradient(135deg, #4facfe 0%, #00a8ff 50%, #0078d4 100%) !important;
-  color: #ffffff !important;
-  box-shadow: 0 8rpx 24rpx rgba(0, 120, 212, 0.35) !important;
-}
-/* 悬浮微动效：次按钮 */
+/* 次按钮 Hover：极淡灰底，绝不喧宾夺主 */
 uni-modal .uni-modal__btn_default:hover {
-  background-color: #e6e7e9 !important;
-  transform: translateY(-2rpx);
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08) !important;
+  background-color: #f3f4f6 !important;
+  color: #6b7280 !important;
+  transform: translateY(-1rpx);
+  box-shadow: none !important;
 }
-/* 悬浮微动效：主按钮亮度提升 + 阴影扩大 */
+/* === 主按钮（开始）：青蓝渐变 + 内发光 + 柔和投影（微拟物）=== */
+uni-modal .uni-modal__btn_primary {
+  background: linear-gradient(135deg, #0EA5E9 0%, #2563EB 100%) !important;
+  color: #ffffff !important;
+  /* 细腻内发光 + 底部柔和投影，营造微拟物精致感 */
+  box-shadow:
+    inset 0 2rpx 4rpx rgba(255, 255, 255, 0.25),
+    0 8rpx 20rpx rgba(37, 99, 235, 0.32),
+    0 2rpx 6rpx rgba(14, 165, 233, 0.2) !important;
+}
+/* 主按钮 Hover：轻微上浮 + 亮度提升 + 阴影扩大 */
 uni-modal .uni-modal__btn_primary:hover {
-  filter: brightness(1.1) !important;
-  box-shadow: 0 12rpx 32rpx rgba(0, 120, 212, 0.45) !important;
-  transform: translateY(-2rpx);
+  filter: brightness(1.08) !important;
+  transform: translateY(-4rpx);
+  box-shadow:
+    inset 0 2rpx 4rpx rgba(255, 255, 255, 0.3),
+    0 14rpx 32rpx rgba(37, 99, 235, 0.42),
+    0 4rpx 10rpx rgba(14, 165, 233, 0.25) !important;
 }
-/* 点击轻微缩放反馈 */
-uni-modal .uni-modal__btn:active {
-  transform: scale(0.96) !important;
+/* 主按钮 Active：按压反馈 */
+uni-modal .uni-modal__btn_primary:active {
+  transform: translateY(-1rpx) scale(0.97) !important;
+  box-shadow:
+    inset 0 2rpx 6rpx rgba(0, 0, 0, 0.12),
+    0 4rpx 12rpx rgba(37, 99, 235, 0.28) !important;
+}
+/* 次按钮 Active：轻微按压 */
+uni-modal .uni-modal__btn_default:active {
+  transform: scale(0.97) !important;
+  background-color: #e5e7eb !important;
 }
 /* #endif */
 </style>
