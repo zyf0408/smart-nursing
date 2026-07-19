@@ -123,11 +123,15 @@ function request(options) {
             reject(new Error(responseData.msg || responseData.message || '登录已过期'))
           } else {
             const errMsg = responseData.msg || responseData.message || '请求失败'
-            uni.showToast({
-              title: errMsg,
-              icon: 'none',
-              duration: 2000
-            })
+            // 当调用方自行管理 loading 时（hideLoading=true），不在此处弹 toast，
+            // 避免与调用方的 showLoading mask 冲突导致灰屏，由 catch 块自行处理
+            if (!hideLoading) {
+              uni.showToast({
+                title: errMsg,
+                icon: 'none',
+                duration: 2000
+              })
+            }
             reject(new Error(errMsg))
           }
         } else if (statusCode === 401) {

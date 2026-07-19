@@ -145,7 +145,7 @@ const exam = {
    */
   submitExam(examId, answersJson) {
     const query = `examId=${examId}&answers=${encodeURIComponent(answersJson)}`
-    return http.post(`/mobile/exam/submit?${query}`, {})
+    return http.post(`/mobile/exam/submit?${query}`, {}, { hideLoading: true })
   },
 
   /**

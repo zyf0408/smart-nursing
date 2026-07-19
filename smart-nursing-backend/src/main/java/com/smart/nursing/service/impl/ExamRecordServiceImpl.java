@@ -207,19 +207,33 @@ public class ExamRecordServiceImpl extends ServiceImpl<ExamRecordMapper, ExamRec
         if (exam.getEndTime() != null && now.isAfter(exam.getEndTime())) {
             throw new BusinessException(GlobalErrorCodeConstants.EXAM_NOT_IN_TIME_RANGE);
         }
-        // 3. 查已考次数
-        long attemptedCount = this.count(new LambdaQueryWrapper<ExamRecordEntity>()
+        // 3. 查已考次数（仅统计已交卷的记录，未完成的进行中记录不计入次数）
+        long completedCount = this.count(new LambdaQueryWrapper<ExamRecordEntity>()
                 .eq(ExamRecordEntity::getExamId, examId)
-                .eq(ExamRecordEntity::getUserId, userId));
+                .eq(ExamRecordEntity::getUserId, userId)
+                .eq(ExamRecordEntity::getStatus, 2));
         // 4. 判断 max_attempts
-        if (exam.getMaxAttempts() != null && attemptedCount >= exam.getMaxAttempts()) {
+        if (exam.getMaxAttempts() != null && completedCount >= exam.getMaxAttempts()) {
             throw new BusinessException(GlobalErrorCodeConstants.EXAM_MAX_ATTEMPTS);
         }
-        // 5. 创建考试记录 (status=1 进行中, attempt_count+1)
+        // 5. 清理该用户此考试下未完成的进行中记录（上次中断/放弃的考试）
+        this.remove(new LambdaQueryWrapper<ExamRecordEntity>()
+                .eq(ExamRecordEntity::getExamId, examId)
+                .eq(ExamRecordEntity::getUserId, userId)
+                .eq(ExamRecordEntity::getStatus, 1));
+        // 6. 计算新 attemptCount：取已有最大 attempt_count + 1
+        ExamRecordEntity maxAttemptRecord = this.getOne(new LambdaQueryWrapper<ExamRecordEntity>()
+                .eq(ExamRecordEntity::getExamId, examId)
+                .eq(ExamRecordEntity::getUserId, userId)
+                .orderByDesc(ExamRecordEntity::getAttemptCount)
+                .last("LIMIT 1"));
+        int nextAttemptNo = (maxAttemptRecord != null && maxAttemptRecord.getAttemptCount() != null)
+                ? maxAttemptRecord.getAttemptCount() + 1 : 1;
+        // 7. 创建考试记录 (status=1 进行中)
         ExamRecordEntity record = new ExamRecordEntity();
         record.setExamId(examId);
         record.setUserId(userId);
-        record.setAttemptCount((int) attemptedCount + 1);
+        record.setAttemptCount(nextAttemptNo);
         record.setStatus(1);
         record.setStartTime(LocalDateTime.now());
         this.save(record);

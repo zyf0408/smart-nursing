@@ -425,8 +425,10 @@ const confirmSubmit = () => {
     confirmText: '确认交卷',
     cancelText: '继续答题',
     confirmColor: '#2979ff',
-    success: (res) => {
+    success: async (res) => {
       if (res.confirm) {
+        // 等待 modal 关闭动画完成，避免 H5 模式下遮罩叠加导致灰屏
+        await new Promise(r => setTimeout(r, 300))
         handleSubmit(false)
       }
     }
@@ -452,6 +454,7 @@ const handleSubmit = async (isAuto = false) => {
   }
 
   uni.showLoading({ title: '提交中...', mask: true })
+  let redirectUrl = ''
 
   try {
     // 构建答案数据: 后端 @RequestParam String answers，传 JSON 字符串
@@ -462,21 +465,16 @@ const handleSubmit = async (isAuto = false) => {
 
     const res = await examApi.submitExam(examId.value, JSON.stringify(answers))
 
-    uni.hideLoading()
-
     // 清除试卷缓存
     uni.removeStorageSync('examPaperData')
 
     // 跳转到结果页
     const recordId = res.recordId || res.id
-    uni.redirectTo({
-      url: `/pages/exam/exam-result?recordId=${recordId}`
-    })
+    redirectUrl = `/pages/exam/exam-result?recordId=${recordId}`
   } catch (err) {
-    uni.hideLoading()
     console.error('交卷失败:', err)
     isSubmitting.value = false // 提交失败后释放锁，允许重试
-    
+
     uni.showModal({
       title: '提交失败',
       content: err.message || '交卷失败，是否重试？',
@@ -488,6 +486,12 @@ const handleSubmit = async (isAuto = false) => {
         }
       }
     })
+  } finally {
+    // 确保 loading 一定被关闭
+    uni.hideLoading()
+    if (redirectUrl) {
+      uni.redirectTo({ url: redirectUrl })
+    }
   }
 }
 
