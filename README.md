@@ -202,7 +202,7 @@ SOURCE sql/init.sql;
 ```bash
 cd smart-nursing-backend
 
-# 配置 AI 相关环境变量（可选，不配置则 AI 功能使用 dummy-key）
+# 配置 AI 相关环境变量（必需，不配置会导致 Spring AI Bean 创建失败）
 # Windows PowerShell
 $env:DASHSCOPE_API_KEY = "sk-your-dashscope-api-key"
 $env:SPRING_AI_OPENAI_BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode"
@@ -214,6 +214,11 @@ export SPRING_AI_OPENAI_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode
 # 启动（默认端口 8888）
 mvn spring-boot:run
 ```
+
+> **重要**：
+> - `base-url` **不要**带 `/v1` 后缀，Spring AI 会自动追加 `/v1/chat/completions`，否则会导致 404 错误。
+> - IntelliJ IDEA 启动前，在 Run Configuration → Environment variables 中配置上述两个变量。
+> - 如果遇到 `BindException: Address already in use`，先杀掉占用 8888 端口的旧进程。
 
 后端启动后访问 API 文档：http://localhost:8888/swagger-ui.html
 
@@ -250,6 +255,15 @@ npm install
 # 方式二：使用命令行
 npm run dev:h5
 ```
+
+启动后访问 `http://localhost:5174`。测试账号：
+
+| 用户名 | 密码 | 角色 |
+|--------|------|------|
+| nurse01 | 123456 | 护士学员 |
+| nurse02 | 123456 | 护士学员 |
+
+> 启动时控制台会出现 `Deprecation Warning [legacy-js-api]`，这是 Dart Sass 弃用警告，不影响运行。
 
 ---
 
@@ -365,6 +379,26 @@ server {
 | 版本 | 日期 | 说明 |
 |------|------|------|
 | 1.0.0 | 2026-07-18 | 初始版本：完成全部 18 个功能模块，含 AI 助手与智能评分 |
+| 1.0.1 | 2026-07-18 | 修复路由跳转、AI 功能 404、日志管理字段缺失、Long 精度丢失 |
+| 1.0.2 | 2026-07-19 | 修复移动端考试流程灰屏、nurse02 权限拒绝、考试次数统计错误 |
+
+### 1.0.2 详细变更
+
+**移动端考试流程灰屏修复**：点击"开始考试"或"交卷"后页面灰屏。根因是 `uni.showModal` 关闭动画未完成就调用 `uni.showLoading`，H5 模式下两层遮罩叠加。修复为 modal 确认后加 300ms 延迟，并用 `finally` 确保 loading 清理。
+
+**nurse02 权限修复**：nurse02 登录后显示"暂无学习内容"。根因是 nurse02 没有分配 NURSE 角色，移动端接口返回 403。修复为在 `sys_user_role` 表分配角色。
+
+**考试次数统计修复**：nurse01 已有进行中记录导致无法重考。根因是 `startExam` 把进行中记录也计入次数。修复为只统计已交卷记录（status=2），创建新记录前先删除旧的进行中记录，用 `max(attempt_count)+1` 计算编号避免唯一键冲突。
+
+### 1.0.1 详细变更
+
+**路由跳转**：文章/视频/PPT/考试/学习记录的编辑页和详情页无法跳转。根因是 `router/index.js` 的 `generateRoutes` 只处理列表页，没注册编辑/详情子路由。
+
+**AI 功能 404**：`SPRING_AI_OPENAI_BASE_URL` 配置了 `/v1` 后缀，Spring AI 又自动追加 `/v1/chat/completions`，导致路径变成 `/v1/v1/chat/completions`。修复为 base-url 不带 `/v1`。
+
+**日志管理字段缺失**：`LogAspect` 没有持久化 `url` 和 `costTime` 到数据库。修复为数据库表添加列、实体添加字段、切面设置字段。
+
+**Long 精度丢失**：MyBatis-Plus 雪花 ID 是 19 位长整型，超过 JavaScript `Number.MAX_SAFE_INTEGER`，前端精度丢失导致删除/更新失败。修复为新增 `JacksonConfig.java`，全局将 Long 序列化为 String。
 
 ---
 

@@ -4506,6 +4506,12 @@ git config --global init.defaultBranch main
 | Redis 单点故障 | Token 丢失导致用户掉线 | Windows 服务自启 + 持久化配置 |
 | SpringAI 依赖稳定性 | AI 依赖较新，可能阻塞后端启动 | **@ConditionalOnProperty 条件加载**，API Key 未配置时 AI Bean 不加载 |
 | Vite 版本真实性 | `^7.0.0` 已确认为最新主版本（2025-06-24 发布） | 已修正，原 `^8.0.16` 不存在 |
+| **Long 精度丢失（已踩坑）** | 雪花 ID 19 位超过 JS `Number.MAX_SAFE_INTEGER`（16 位），前端精度丢失导致删除/更新失败 | `JacksonConfig` 全局将 Long/BigInteger 序列化为 String；用 `modulesToInstall` 不用 `modules` 避免覆盖 `JavaTimeModule` |
+| **Spring AI base-url 重复 /v1（已踩坑）** | base-url 带 `/v1` 后，Spring AI 自动追加 `/v1/chat/completions` 变成 `/v1/v1/...` → 404 | base-url 配置为 `xxx/compatible-mode`，不带 `/v1` |
+| **uni-app H5 灰屏（已踩坑）** | `uni.showModal` 关闭动画未完成就调 `uni.showLoading`，遮罩叠加两层，`hideLoading` 只关一层 → 灰屏 | modal 确认回调中加 300ms 延迟，用 `finally` 确保 loading 清理；调用方传 `{ hideLoading: true }` 给 request.js |
+| **端口占用导致启动失败（已踩坑）** | 命令行与 IJ 共用 8888 端口，切换启动方式时旧进程未释放 | 切换前 `Get-NetTCPConnection -LocalPort 8888 \| Stop-Process` 杀掉旧进程 |
+| **考试次数统计错误（已踩坑）** | `startExam` 把进行中记录计入次数，达到 max_attempts 被拒绝无法重考 | 只统计已交卷记录（status=2），创建新记录前先删除旧的进行中记录，用 `max(attempt_count)+1` 避免唯一键冲突 |
+| **移动端 NURSE 角色缺失（已踩坑）** | 用户未在 `sys_user_role` 表分配角色，移动端接口被 `AroundCut` 拦截返回 403 | 新增护士用户时必须分配 NURSE 角色（role_id=3） |
 
 ### 15.2 分批交付优先级（P0/P1/P2）
 

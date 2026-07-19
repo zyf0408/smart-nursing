@@ -1336,6 +1336,8 @@ mybatis-plus:
 - **主键类型**：用 `Long`（包装类型），避免 0 值歧义
 - **返回值**：增删改方法返回 `int`（受影响行数），业务层判断 `> 0` 判定成功
 
+> **雪花 ID 与 Long 序列化约定**：当主键策略采用 `IdType.ASSIGN_ID`（雪花算法）时，生成的 19 位 ID 会超过 JavaScript `Number.MAX_SAFE_INTEGER`（16 位），前端精度丢失会导致删除/更新失败。此时必须配置全局 Jackson 序列化：新增 `JacksonConfig` 类，通过 `Jackson2ObjectMapperBuilderCustomizer` 将 `Long`、`Long.TYPE`、`BigInteger` 用 `ToStringSerializer` 序列化为 String。**关键**：用 `builder.modulesToInstall(module)` 追加模块，不能用 `builder.modules(module)`，否则会覆盖 `JavaTimeModule` 导致 `LocalDateTime` 序列化失败。
+
 ### 11.2 后端编码约定
 
 - **注解组合**：Entity 用 `@Data` + `@ToString` + `@TableName` + `@TableId`
