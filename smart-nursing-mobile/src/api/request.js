@@ -88,13 +88,10 @@ function request(options) {
     requestHeader['Authorization'] = `Bearer ${token}`
   }
 
-  // 显示 loading
-  if (!hideLoading) {
-    uni.showLoading({
-      title: '加载中...',
-      mask: true
-    })
-  }
+  // 不再使用 uni.showLoading/hideLoading
+  // 原因：uni-app H5 模式下 showLoading 的 mask 存在 DOM 残留问题，
+  // hideLoading() 调用后 .uni-mask 和 .uni-toast 元素不会被移除，
+  // 导致页面灰屏。改为由各页面自行管理 loading 状态。
 
   return new Promise((resolve, reject) => {
     uni.request({
@@ -107,12 +104,7 @@ function request(options) {
         const statusCode = res.statusCode
         const responseData = res.data
 
-        // 隐藏 loading
-        if (!hideLoading) {
-          uni.hideLoading()
-        }
-
-        // HTTP 状态码处理
+        // HTTP 200 请求完成（页面自行管理 loading，无需 hideLoading）
         if (statusCode === 200) {
           // 业务状态码处理（假设后端返回 { code, message, data } 格式）
           if (responseData.code === 200 || responseData.code === 0 || responseData.success === true) {
@@ -165,10 +157,7 @@ function request(options) {
         }
       },
       fail: (err) => {
-        if (!hideLoading) {
-          uni.hideLoading()
-        }
-        // 网络错误
+        // 网络错误（页面自行管理 loading，无需 hideLoading）
         uni.showToast({
           title: '网络连接失败，请检查网络',
           icon: 'none',

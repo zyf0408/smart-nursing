@@ -453,7 +453,7 @@ const handleSubmit = async (isAuto = false) => {
     countdownInterval.value = null
   }
 
-  uni.showLoading({ title: '提交中...', mask: true })
+  // 用 isSubmitting 状态代替 uni.showLoading，避免 H5 mask 残留灰屏
   let redirectUrl = ''
 
   try {
@@ -487,8 +487,7 @@ const handleSubmit = async (isAuto = false) => {
       }
     })
   } finally {
-    // 确保 loading 一定被关闭
-    uni.hideLoading()
+    isSubmitting.value = false
     if (redirectUrl) {
       uni.redirectTo({ url: redirectUrl })
     }

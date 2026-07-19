@@ -10,6 +10,56 @@ export default {
         url: '/pages/login/login'
       })
     }
+
+    // #ifdef H5
+    // 修复 uni-app H5 模式下 uni.showModal / uni.showLoading 的 mask 残留问题
+    // 原因：showModal/showLoading 关闭后 .uni-mask 和 uni-modal 元素不会被移除，
+    //       导致页面被灰色遮罩覆盖（灰屏），且每次操作都会叠加更多遮罩。
+    // 方案：hook showModal，在回调后自动清理残留的 DOM 元素。
+    const originalShowModal = uni.showModal
+    uni.showModal = function (options) {
+      const cleanup = () => {
+        // 延迟 500ms 确保 uni-app 内部关闭动画完成后再清理 DOM
+        setTimeout(() => {
+          // 直接移除所有 uni-modal 元素（success/fail 回调意味着 modal 已关闭）
+          document.querySelectorAll('uni-modal').forEach(el => el.remove())
+          // 移除所有孤立的 .uni-mask（没有可见 modal 或 toast 的）
+          const hasVisibleModal = Array.from(document.querySelectorAll('uni-modal')).some(el => el.style.display !== 'none')
+          const hasVisibleToast = document.querySelector('.uni-toast') && document.querySelector('.uni-toast').style.display !== 'none'
+          if (!hasVisibleModal && !hasVisibleToast) {
+            document.querySelectorAll('.uni-mask').forEach(el => el.remove())
+          }
+        }, 500)
+      }
+      const originalSuccess = options.success
+      const originalFail = options.fail
+      const originalComplete = options.complete
+      options.success = function (res) {
+        if (originalSuccess) originalSuccess(res)
+        cleanup()
+      }
+      options.fail = function (err) {
+        if (originalFail) originalFail(err)
+        cleanup()
+      }
+      options.complete = function (res) {
+        if (originalComplete) originalComplete(res)
+        cleanup()
+      }
+      return originalShowModal.call(uni, options)
+    }
+
+    // 路由变化时也清理残留 mask
+    window.addEventListener('hashchange', () => {
+      setTimeout(() => {
+        document.querySelectorAll('uni-modal').forEach(el => el.remove())
+        const hasVisibleToast = document.querySelector('.uni-toast') && document.querySelector('.uni-toast').style.display !== 'none'
+        if (!hasVisibleToast) {
+          document.querySelectorAll('.uni-mask').forEach(el => el.remove())
+        }
+      }, 500)
+    })
+    // #endif
   },
   onShow() {
     console.log('App Show')

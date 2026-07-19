@@ -218,9 +218,8 @@ const handleStartExam = () => {
     confirmColor: '#0EA5E9',
     success: async (res) => {
       if (res.confirm) {
-        // 等待 modal 关闭动画完成，避免 H5 模式下 modal 遮罩与 loading 叠加导致灰屏
-        await new Promise(r => setTimeout(r, 300))
-        uni.showLoading({ title: '准备中...', mask: true })
+        // 用页面内 loading 代替 uni.showLoading，避免 H5 mask 残留灰屏
+        loading.value = true
         let needNavigate = false
         try {
           // 调用开始考试接口（创建考试记录）
@@ -240,8 +239,7 @@ const handleStartExam = () => {
           console.error('开始考试失败:', err)
           uni.showToast({ title: err.message || '开始考试失败', icon: 'none' })
         } finally {
-          // 确保 loading 一定被关闭
-          uni.hideLoading()
+          loading.value = false
           if (needNavigate) {
             uni.navigateTo({
               url: `/pages/exam/exam-paper?examId=${examId}&duration=${exam.value.duration}`
