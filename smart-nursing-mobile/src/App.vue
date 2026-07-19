@@ -306,15 +306,54 @@ uni-modal .uni-modal__bd {
   font-size: 30rpx !important;
   padding: 24rpx 40rpx !important;
 }
-/* 按钮区域加分隔线 */
+/* 按钮区域：flex 布局 + 间距，移除传统分隔线，采用现代卡片式按钮组 */
 uni-modal .uni-modal__ft {
-  border-top: 1rpx solid #ebedf0 !important;
+  display: flex !important;
+  gap: 20rpx !important;
+  padding: 16rpx 40rpx 40rpx !important;
+  border-top: none !important;
 }
-/* 按钮文字加粗，便于识别 */
+/* 按钮基础样式：胶囊形圆角 + 过渡动效 */
 uni-modal .uni-modal__btn {
+  flex: 1 !important;
+  height: 88rpx !important;
+  line-height: 88rpx !important;
+  padding: 0 !important;
+  border-radius: 44rpx !important;
   font-size: 32rpx !important;
   font-weight: 500 !important;
-  padding: 24rpx 0 !important;
+  text-align: center !important;
+  cursor: pointer !important;
+  user-select: none !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+/* 次按钮（取消）：浅灰背景，低调但可识别 */
+uni-modal .uni-modal__btn_default {
+  background-color: #f2f3f5 !important;
+  color: #646566 !important;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04) !important;
+}
+/* 主按钮（开始）：科技蓝渐变色 + 柔和投影 */
+uni-modal .uni-modal__btn_primary {
+  background: linear-gradient(135deg, #4facfe 0%, #00a8ff 50%, #0078d4 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 8rpx 24rpx rgba(0, 120, 212, 0.35) !important;
+}
+/* 悬浮微动效：次按钮 */
+uni-modal .uni-modal__btn_default:hover {
+  background-color: #e6e7e9 !important;
+  transform: translateY(-2rpx);
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08) !important;
+}
+/* 悬浮微动效：主按钮亮度提升 + 阴影扩大 */
+uni-modal .uni-modal__btn_primary:hover {
+  filter: brightness(1.1) !important;
+  box-shadow: 0 12rpx 32rpx rgba(0, 120, 212, 0.45) !important;
+  transform: translateY(-2rpx);
+}
+/* 点击轻微缩放反馈 */
+uni-modal .uni-modal__btn:active {
+  transform: scale(0.96) !important;
 }
 /* #endif */
 </style>
