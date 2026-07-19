@@ -286,6 +286,35 @@ uni-modal .uni-mask {
 uni-modal .uni-modal {
   position: relative !important;
   z-index: 2 !important;
+  /* 明显的白色背景 + 圆角 + 阴影，避免和遮罩混为一体 */
+  background-color: #ffffff !important;
+  border-radius: 24rpx !important;
+  box-shadow: 0 16rpx 48rpx rgba(0, 0, 0, 0.25) !important;
+  overflow: hidden !important;
+  width: 600rpx !important;
+  max-width: 85vw !important;
+}
+/* 标题加粗 */
+uni-modal .uni-modal__title {
+  font-size: 34rpx !important;
+  font-weight: 600 !important;
+  color: #1a1a1a !important;
+}
+/* 正文文字颜色 */
+uni-modal .uni-modal__bd {
+  color: #333333 !important;
+  font-size: 30rpx !important;
+  padding: 24rpx 40rpx !important;
+}
+/* 按钮区域加分隔线 */
+uni-modal .uni-modal__ft {
+  border-top: 1rpx solid #ebedf0 !important;
+}
+/* 按钮文字加粗，便于识别 */
+uni-modal .uni-modal__btn {
+  font-size: 32rpx !important;
+  font-weight: 500 !important;
+  padding: 24rpx 0 !important;
 }
 /* #endif */
 </style>
