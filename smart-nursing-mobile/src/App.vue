@@ -256,5 +256,24 @@ page {
   transform: translateY(-2rpx);
   box-shadow: var(--shadow-hover);
 }
+
+/* 修复 uni-app H5 模式下 uni-modal 组件 CSS 未加载导致 modal 不显示的问题
+   症状: 点击按钮调用 uni.showModal 后，只有灰色遮罩(.uni-mask)显示，
+   modal 内容(.uni-modal)虽存在于 DOM 但因 uni-modal 元素 display:inline 而不可见，
+   看起来像"灰屏"。
+   原因: uni-modal 是自定义元素，浏览器默认 display:inline，需要 uni-app 的 CSS
+   设置为 display:flex。但某些情况下该 CSS 未被正确加载。
+   方案: 在全局样式中强制 uni-modal 使用正确的 flex 布局。 */
+uni-modal {
+  display: flex !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 999 !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
 /* #endif */
 </style>
