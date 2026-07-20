@@ -12,13 +12,15 @@ export default {
     }
 
     // #ifdef H5
-    // 路由变化时清理残留 mask（不 hook showModal，避免破坏 uni-app 内部实现）
-    // showModal/showLoading 的显示问题已通过全局 CSS 修复（见 style 部分）
-    window.addEventListener('hashchange', () => {
+    // 路由变化时清理残留 mask/toast（不 hook showModal，避免破坏 uni-app 内部实现）
+    // 原因：uni.showModal/showToast/showLoading 关闭后 DOM 元素不被移除，
+    //       残留的遮罩会遮挡后续页面按钮点击（"点击没反应"）
+    function cleanupResidual() {
       setTimeout(() => {
-        // 路由变化后，所有 modal/toast 都应该被关闭
         // 移除所有残留的 uni-modal 元素（包括其内部的 .uni-mask）
         document.querySelectorAll('uni-modal').forEach(el => el.remove())
+        // 移除所有残留的 toast 元素（.uni-toast 及其容器 uni-toast）
+        document.querySelectorAll('.uni-toast, uni-toast').forEach(el => el.remove())
         // 移除所有孤立的 .uni-mask（不在 uni-modal 内的）
         document.querySelectorAll('.uni-mask').forEach(el => {
           const parent = el.parentElement
@@ -27,7 +29,24 @@ export default {
           }
         })
       }, 500)
-    })
+    }
+    // hashchange（hash 路由变化）
+    window.addEventListener('hashchange', cleanupResidual)
+    // popstate（浏览器前进/后退）
+    window.addEventListener('popstate', cleanupResidual)
+    // hook pushState/replaceState（uni-app 的 switchTab/navigateTo 使用 pushState）
+    const originalPushState = history.pushState
+    const originalReplaceState = history.replaceState
+    history.pushState = function (...args) {
+      const result = originalPushState.apply(this, args)
+      cleanupResidual()
+      return result
+    }
+    history.replaceState = function (...args) {
+      const result = originalReplaceState.apply(this, args)
+      cleanupResidual()
+      return result
+    }
     // #endif
   },
   onShow() {

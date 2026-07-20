@@ -141,6 +141,7 @@ const handleLogin = async () => {
     uni.showToast({ title: '登录成功', icon: 'success' })
 
     setTimeout(() => {
+      uni.hideToast()
       uni.switchTab({
         url: '/pages/learn/index'
       })
