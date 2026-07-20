@@ -12,41 +12,11 @@ export default {
     }
 
     // #ifdef H5
-    // 路由变化时清理残留 mask/toast（不 hook showModal，避免破坏 uni-app 内部实现）
-    // 原因：uni.showModal/showToast/showLoading 关闭后 DOM 元素不被移除，
-    //       残留的遮罩会遮挡后续页面按钮点击（"点击没反应"）
-    function cleanupResidual() {
-      setTimeout(() => {
-        // 移除所有残留的 uni-modal 元素（包括其内部的 .uni-mask）
-        document.querySelectorAll('uni-modal').forEach(el => el.remove())
-        // 移除所有残留的 toast 元素（.uni-toast 及其容器 uni-toast）
-        document.querySelectorAll('.uni-toast, uni-toast').forEach(el => el.remove())
-        // 移除所有孤立的 .uni-mask（不在 uni-modal 内的）
-        document.querySelectorAll('.uni-mask').forEach(el => {
-          const parent = el.parentElement
-          if (!parent || parent.tagName.toLowerCase() !== 'uni-modal') {
-            el.remove()
-          }
-        })
-      }, 500)
-    }
-    // hashchange（hash 路由变化）
-    window.addEventListener('hashchange', cleanupResidual)
-    // popstate（浏览器前进/后退）
-    window.addEventListener('popstate', cleanupResidual)
-    // hook pushState/replaceState（uni-app 的 switchTab/navigateTo 使用 pushState）
-    const originalPushState = history.pushState
-    const originalReplaceState = history.replaceState
-    history.pushState = function (...args) {
-      const result = originalPushState.apply(this, args)
-      cleanupResidual()
-      return result
-    }
-    history.replaceState = function (...args) {
-      const result = originalReplaceState.apply(this, args)
-      cleanupResidual()
-      return result
-    }
+    // 不 hook uni.showModal，不直接移除 uni-modal DOM（会破坏 uni-app 内部状态）
+    // mask/toast 残留问题通过以下方式解决：
+    // 1. 各页面在使用 showToast 后主动 hideToast
+    // 2. 全局 CSS 确保 uni-modal 正确显示
+    // 3. 路由变化时用 CSS 隐藏残留遮罩（而非移除 DOM）
     // #endif
   },
   onShow() {
@@ -254,7 +224,15 @@ page {
    原因: uni-modal 是自定义元素，浏览器默认 display:inline，需要 uni-app 的 CSS
    设置为 display:flex。同时 .uni-mask 和 .uni-modal 内容的 z-index 层级关系
    也需要 uni-app 的 CSS 来保证内容在遮罩之上。但某些情况下该 CSS 未被正确加载。
-   方案: 在全局样式中强制 uni-modal 及其子元素使用正确的层级关系。 */
+   方案: 在全局样式中强制 uni-modal 及其子元素使用正确的层级关系。
+
+   重要: 不直接移除 uni-modal DOM 元素（会破坏 uni-app 内部状态，
+   导致后续 uni.showModal 调用被静默忽略）。
+   残留的空 uni-modal（没有 .uni-modal 子内容的）通过 CSS :has() 隐藏。 */
+/* 残留的空 uni-modal（只有遮罩没有内容框的）自动隐藏，不阻挡交互 */
+uni-modal:not(:has(.uni-modal)) {
+  display: none !important;
+}
 uni-modal {
   display: flex !important;
   position: fixed !important;
