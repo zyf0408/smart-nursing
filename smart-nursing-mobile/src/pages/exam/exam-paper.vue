@@ -413,7 +413,12 @@ const toggleAnswerCard = () => {
 /**
  * 确认交卷
  */
+const isConfirming = ref(false)
 const confirmSubmit = () => {
+  // 防重复点击：如果已经在确认流程中，直接返回
+  if (isConfirming.value) return
+  isConfirming.value = true
+
   const unanswered = questions.value.length - answeredCount.value
   let content = '确定要提交答卷吗？'
   if (unanswered > 0) {
@@ -431,6 +436,12 @@ const confirmSubmit = () => {
         await new Promise(r => setTimeout(r, 300))
         handleSubmit(false)
       }
+      // 释放锁（无论确认还是取消）
+      isConfirming.value = false
+    },
+    fail: () => {
+      // modal 调用失败，释放锁
+      isConfirming.value = false
     }
   })
 }

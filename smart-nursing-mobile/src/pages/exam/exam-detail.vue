@@ -128,6 +128,9 @@ const exam = ref(null)
 const loading = ref(true)
 let examId = null
 
+// 防重复点击锁（防止 @tap 事件重复触发导致 showModal 被调用多次）
+const isStarting = ref(false)
+
 // 题目数量
 const questionCount = computed(() => {
   if (!exam.value || !exam.value.questionList) return 0
@@ -211,6 +214,10 @@ const updateCountdown = () => {
  * 开始考试
  */
 const handleStartExam = () => {
+  // 防重复点击：如果已经在流程中，直接返回
+  if (isStarting.value) return
+  isStarting.value = true
+
   uni.showModal({
     title: '确认开始考试',
     content: `考试时长 ${exam.value.duration} 分钟，确认开始吗？`,
@@ -240,13 +247,22 @@ const handleStartExam = () => {
           uni.showToast({ title: err.message || '开始考试失败', icon: 'none' })
         } finally {
           loading.value = false
+          // 延迟释放锁，避免导航后立即重复触发
+          setTimeout(() => { isStarting.value = false }, 500)
           if (needNavigate) {
             uni.navigateTo({
               url: `/pages/exam/exam-paper?examId=${examId}&duration=${exam.value.duration}`
             })
           }
         }
+      } else {
+        // 用户点取消，释放锁
+        isStarting.value = false
       }
+    },
+    fail: () => {
+      // modal 调用失败，释放锁
+      isStarting.value = false
     }
   })
 }
