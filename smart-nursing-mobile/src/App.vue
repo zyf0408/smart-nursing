@@ -233,8 +233,9 @@ page {
 uni-modal:not(:has(.uni-modal)) {
   display: none !important;
 }
+/* display 不用 !important，让 uni-app 能通过内联 style="display:none" 隐藏 modal */
 uni-modal {
-  display: flex !important;
+  display: flex;
   position: fixed !important;
   top: 0 !important;
   left: 0 !important;
