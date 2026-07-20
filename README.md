@@ -381,6 +381,19 @@ server {
 | 1.0.0 | 2026-07-18 | 初始版本：完成全部 18 个功能模块，含 AI 助手与智能评分 |
 | 1.0.1 | 2026-07-18 | 修复路由跳转、AI 功能 404、日志管理字段缺失、Long 精度丢失 |
 | 1.0.2 | 2026-07-19 | 修复移动端考试流程灰屏、nurse02 权限拒绝、考试次数统计错误 |
+| 1.0.3 | 2026-07-20 | 修复移动端 modal 弹窗系列问题（ghost modal、重复弹出、取消不掉） |
+
+### 1.0.3 详细变更
+
+**移动端 modal 弹窗系列修复**：本次集中修复了 `uni.showModal` 在 H5 模式下的多个衍生问题，涉及 4 个独立 bug：
+
+1. **登录 toast 残留导致后续页面按钮无法点击**：登录成功后的 `uni.showToast` 遮罩未清除，残留在后续页面上拦截点击。修复为登录跳转前调用 `uni.hideToast()`。
+
+2. **提交答卷无反应（hook 破坏 uni.showModal）**：之前在 `App.vue` 中 hook 了 `history.pushState`/`replaceState` 并在路由变化时调用 `cleanupResidual` 直接移除 `uni-modal` DOM 元素，破坏了 uni-app 内部状态管理，导致后续 `uni.showModal` 调用被静默忽略。修复为完全移除 hook 和 DOM 清理代码，改用 CSS `:has()` 选择器隐藏残留的空 modal。
+
+3. **开始考试/提交答卷 modal 重复弹出无法取消**：`@tap` 事件可能重复触发导致 `uni.showModal` 被调用多次，第二个 modal 因内部状态冲突无法取消。修复为在 `handleStartExam` 和 `confirmSubmit` 中添加防重复点击锁（`isStarting`/`isConfirming`）。
+
+4. **modal 导航后不消失（ghost modal）**：`App.vue` 中 CSS `uni-modal { display: flex !important }` 的 `!important` 强制所有 modal 可见，阻止了 uni-app 通过内联 `style="display:none"` 隐藏 modal。修复为去掉 `display` 的 `!important`，让 uni-app 能正常控制显隐。
 
 ### 1.0.2 详细变更
 

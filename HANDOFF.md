@@ -1,6 +1,6 @@
 # 项目交接文档
 
-> 最后更新：2026-07-19
+> 最后更新：2026-07-20
 > 适用对象：完全没有任何上下文的新会话
 
 ---
@@ -82,6 +82,8 @@ npm run dev:h5
 **第四阶段（7/18）**：路由跳转、AI 功能、日志管理、Long 精度丢失等关键 Bug 修复。
 
 **第五阶段（7/19）**：移动端考试流程灰屏问题修复，nurse02 权限问题修复。
+
+**第六阶段（7/20）**：移动端 modal 弹窗系列问题集中修复——包括 hook 破坏 uni.showModal、modal 重复弹出无法取消、ghost modal 导航后不消失等 4 个衍生 bug。
 
 ---
 
@@ -227,29 +229,47 @@ public class JacksonConfig {
 
 | 提交 | 内容 |
 |------|------|
+| `462111f` | 修复 modal 导航后不消失（ghost modal）- 去掉 CSS display !important |
+| `056bd75` | 修复开始考试/提交答卷 modal 重复弹出无法取消 - 添加防重复点击锁 |
+| `0802709` | 修复提交答卷无反应 - 移除破坏 uni.showModal 的 hook 和 DOM 清理 |
+| `ee1b055` | 修复登录 toast 残留导致后续页面按钮无法点击 |
+| `4cc996d` | 修复提交答卷无反应 - 移除破坏 uni.showModal 的 hook（早期尝试） |
 | `04ee0db` | 移动端全面优化 + 搜索功能修复 + 清理指导文档 |
 | `8a0c2ca` | 添加项目 README 文档 |
 | `4c11027` | 修复路由跳转、AI功能、日志管理和Long精度丢失问题 |
 | `d47252d` | 修复移动端多模块问题并添加项目文档 |
 | `fe093cc` | 智慧护理培训系统全栈代码（初始版本） |
 
-### 未提交的本地修改（7/19 考试流程修复）
+### 7/20 modal 弹窗系列修复详情
 
-以下 5 个文件是 7/19 修复考试灰屏问题的代码，尚未提交到 Git：
-- `smart-nursing-backend/.../ExamRecordServiceImpl.java` - 修复考试次数计算和 attemptCount 逻辑
-- `smart-nursing-mobile/src/api/index.js` - submitExam 添加 hideLoading
-- `smart-nursing-mobile/src/api/request.js` - hideLoading 时不弹 toast
-- `smart-nursing-mobile/src/pages/exam/exam-detail.vue` - modal 后加 300ms 延迟，finally 清理
-- `smart-nursing-mobile/src/pages/exam/exam-paper.vue` - 交卷确认 modal 后加延迟，finally 清理
+本次集中修复了 `uni.showModal` 在 H5 模式下的多个衍生问题，共涉及 5 次提交、4 个独立 bug：
+
+**Bug 1 - 登录 toast 残留**：登录成功后的 `uni.showToast` 遮罩未清除，残留在后续页面上拦截点击。修复为登录跳转前调用 `uni.hideToast()`。
+
+**Bug 2 - 提交答卷无反应（hook 破坏 uni.showModal）**：之前在 `App.vue` 中 hook 了 `history.pushState`/`replaceState` 并在路由变化时调用 `cleanupResidual` 直接移除 `uni-modal` DOM 元素（`el.remove()`），破坏了 uni-app 内部状态管理。uni-app 内部有一个状态标志跟踪 modal 是否正在显示，当 DOM 被直接移除时这个状态没有被重置，导致后续 `uni.showModal` 调用被静默忽略。修复为完全移除 hook 和 DOM 清理代码，改用 CSS `:has()` 选择器隐藏残留的空 modal（`uni-modal:not(:has(.uni-modal)) { display: none }`）。
+
+**Bug 3 - modal 重复弹出无法取消**：`@tap` 事件可能重复触发（事件冒泡/快速双击）导致 `uni.showModal` 被调用多次，第二个 modal 因 uni-app 内部状态冲突，按钮事件无法正确绑定，表现为"取消不掉"。修复为在 `handleStartExam` 和 `confirmSubmit` 中添加防重复点击锁（`isStarting`/`isConfirming`），在 modal 的 `success`（确认/取消）和 `fail` 回调中释放锁。
+
+**Bug 4 - ghost modal（导航后不消失）**：`App.vue` 中 CSS `uni-modal { display: flex !important }` 的 `!important` 强制所有 modal 可见，阻止了 uni-app 通过内联 `style="display:none"` 隐藏 modal。用户点击"开始"后跳转到答题页，但原 modal 仍被强制显示。修复为去掉 `display` 的 `!important`（`display: flex !important` → `display: flex`），让 uni-app 能通过内联样式覆盖来控制 modal 显隐，同时默认值 `flex` 仍然修复了 `uni-modal` 自定义元素默认 `display:inline` 的问题。
+
+**涉及文件**：
+- `smart-nursing-mobile/src/App.vue` - 移除 hook/DOM 清理，CSS 修复
+- `smart-nursing-mobile/src/pages/exam/exam-detail.vue` - 添加 `isStarting` 防重复锁
+- `smart-nursing-mobile/src/pages/exam/exam-paper.vue` - 添加 `isConfirming` 防重复锁
+- `smart-nursing-mobile/src/pages/login/login.vue` - 登录前 `hideToast()`
+
+### 数据库调整（7/20 测试期间）
+
+测试过程中将 `nursing_exam` 表中 `exam_id=1` 和 `exam_id=2` 的 `max_attempts` 从默认值调整为 100，方便反复测试考试流程。这不是代码变更，但如果重新初始化数据库需要注意。
 
 ---
 
 ## 6 下一步计划
 
-1. **提交 7/19 修复到 Git**——考试流程灰屏和 nurse02 权限修复
-2. **生产构建验证**——运行 `npm run build` 确认生产构建无报错
-3. **各管理页面的「新增」「编辑」弹窗交互**——逐个点击测试表单提交
-4. **移动端真机测试**——在手机浏览器/微信内置浏览器中验证响应式
+1. **生产构建验证**——运行 `npm run build` 确认生产构建无报错
+2. **各管理页面的「新增」「编辑」弹窗交互**——逐个点击测试表单提交
+3. **移动端真机测试**——在手机浏览器/微信内置浏览器中验证响应式
+4. **数据库 `max_attempts` 配置**——正式环境部署时，根据实际需求设置考试最大次数（测试期间临时设为 100）
 
 ---
 
@@ -389,6 +409,30 @@ Get-NetTCPConnection -LocalPort 8888 -State Listen | ForEach-Object { Stop-Proce
 
 **教训**：新增护士用户时，必须在 `sys_user_role` 表中分配 `NURSE` 角色（role_id=3），否则无法访问移动端接口。
 
+### 7.16 不要直接移除 uni-modal DOM 元素
+
+**现象**：点击"提交答卷"后没有任何反应，`uni.showModal` 的 `success`/`fail` 回调都不触发。
+
+**根因**：之前在 `App.vue` 的 `cleanupResidual` 函数中用 `document.querySelectorAll('uni-modal').forEach(el => el.remove())` 直接移除 `uni-modal` DOM 元素。uni-app 内部有一个状态标志跟踪 modal 是否正在显示，当 DOM 被直接移除时这个状态没有被重置（uni-app 以为 modal 还在显示），导致后续 `uni.showModal` 调用被静默忽略——modal 不被创建，回调也不触发。
+
+**教训**：**永远不要直接移除 uni-app 管理的 DOM 元素**（`uni-modal`、`uni-toast`、`.uni-mask` 等）。如果需要处理残留的遮罩，用 CSS 隐藏（如 `uni-modal:not(:has(.uni-modal)) { display: none }`），而不是移除 DOM。uni-app 的内部状态管理依赖于 DOM 的存在，直接移除会破坏状态机。
+
+### 7.17 uni-modal CSS 的 display 不要用 !important
+
+**现象**：点击"开始考试"的"开始"按钮后，页面跳转到了答题页，但"确认开始考试"的 modal 仍然显示在上面（ghost modal），无法取消。
+
+**根因**：`App.vue` 中 CSS `uni-modal { display: flex !important }` 的 `!important` 强制所有 modal 可见。uni-app 在用户点击按钮后会通过内联 `style="display:none"` 隐藏 modal，但 `!important` 的优先级高于内联样式，导致 uni-app 无法隐藏 modal。
+
+**教训**：**不要用 `!important` 强制 uni-app 组件的 `display` 属性**。uni-app 需要通过内联样式动态控制组件显隐，`!important` 会阻止这一机制。正确做法是 `display: flex`（不带 `!important`），这样既能在默认情况下让 `uni-modal` 自定义元素正确显示为 flex（覆盖浏览器默认的 `display:inline`），又能让 uni-app 通过内联样式覆盖来隐藏它。
+
+### 7.18 uni.showModal 可能因 @tap 重复触发而被调用多次
+
+**现象**：点击"开始考试"后，"确认开始考试"的 modal 弹出了两次，第二个 modal 无法取消（点击"取消"和"开始"都没反应）。
+
+**根因**：uni-app H5 模式下 `@tap` 事件可能重复触发（事件冒泡或快速双击），导致 `uni.showModal` 被调用多次。第二个 modal 因 uni-app 内部状态冲突（uni-app 认为 modal 已经在显示了），按钮事件无法正确绑定，表现为"取消不掉"。
+
+**教训**：**所有调用 `uni.showModal` 的按钮事件都要加防重复点击锁**。用一个 ref 标志位（如 `isStarting`/`isConfirming`），进入流程时置 `true`，在 modal 的 `success`（无论确认还是取消）和 `fail` 回调中释放锁。确认后的业务流程结束后也要延迟释放锁（如 `setTimeout(() => { isStarting.value = false }, 500)`），避免导航后立即重复触发。
+
 ---
 
 ## 8 关键文件清单
@@ -424,13 +468,14 @@ Get-NetTCPConnection -LocalPort 8888 -State Listen | ForEach-Object { Stop-Proce
 
 | 文件 | 作用 | 备注 |
 |------|------|------|
+| `App.vue` | 全局入口 + uni-modal CSS 样式 | 7/20 修复：移除 hook/DOM 清理，CSS display 去掉 !important |
 | `api/request.js` | 请求封装 | 401 防抖锁，hideLoading 时不弹 toast |
 | `api/index.js` | API 接口 | startExam/submitExam 都传 hideLoading:true |
-| `pages/exam/exam-detail.vue` | 考试详情页 | modal 后加 300ms 延迟，finally 清理 loading |
-| `pages/exam/exam-paper.vue` | 答题页 | 交卷确认同样处理灰屏问题 |
+| `pages/exam/exam-detail.vue` | 考试详情页 | 7/20 添加 isStarting 防重复锁；modal 后加 300ms 延迟，finally 清理 loading |
+| `pages/exam/exam-paper.vue` | 答题页 | 7/20 添加 isConfirming 防重复锁；交卷确认同样处理灰屏问题 |
 | `pages/exam/exam-result.vue` | 考试结果页 | - |
 | `pages/learn/index.vue` | 学习中心 | Banner + 分类筛选 + 内容列表 |
-| `pages/login/login.vue` | 登录页 | 记住用户名功能 |
+| `pages/login/login.vue` | 登录页 | 7/20 添加登录前 hideToast()；记住用户名功能 |
 | `pages/user/index.vue` | 个人中心 | 学习记录、考试记录、收藏 |
 
 ---
@@ -473,6 +518,10 @@ Get-NetTCPConnection -LocalPort 8888 -State Listen | ForEach-Object { Stop-Proce
 - `uni.showModal` 后调用 `uni.showLoading` 前必须加 300ms 延迟
 - 调用方自己管理 loading 时，传 `{ hideLoading: true }` 给 `request.js`
 - `request.js` 在 `hideLoading=true` 时不弹 toast，由调用方 catch 块处理
+- **不要直接移除 uni-app 管理的 DOM 元素**（`uni-modal`、`uni-toast`、`.uni-mask`），用 CSS 隐藏而非 `el.remove()`
+- **uni-modal 的 CSS `display` 不要用 `!important`**，否则会阻止 uni-app 通过内联样式隐藏 modal
+- **所有调用 `uni.showModal` 的按钮事件都要加防重复点击锁**，避免 `@tap` 重复触发导致 modal 弹出多次
+- **登录/跳转前调用 `uni.hideToast()`**，避免 toast 遮罩残留在后续页面拦截点击
 
 ### 技术版本
 
