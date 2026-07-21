@@ -1,6 +1,6 @@
 # 项目交接文档
 
-> 最后更新：2026-07-20
+> 最后更新：2026-07-21
 > 适用对象：完全没有任何上下文的新会话
 
 ---
@@ -84,6 +84,8 @@ npm run dev:h5
 **第五阶段（7/19）**：移动端考试流程灰屏问题修复，nurse02 权限问题修复。
 
 **第六阶段（7/20）**：移动端 modal 弹窗系列问题集中修复——包括 hook 破坏 uni.showModal、modal 重复弹出无法取消、ghost modal 导航后不消失等 4 个衍生 bug。
+
+**第七阶段（7/21）**：考试判分系列问题集中修复——包括答案格式不匹配导致0分、判断题答案未归一化、多选题脏数据判错、结果页字段名不匹配、管理端试题选择弹窗不加载数据等 5 个独立 bug。
 
 ---
 
@@ -224,6 +226,31 @@ public class JacksonConfig {
 ## 5 当前状态
 
 **项目已全部修复并推送到 GitHub。** 三端（后端、PC 管理端、移动端）功能正常，关键流程（登录、学习、考试、AI 助手、日志审计）均已实测通过。
+
+### 7/21 考试判分系列修复详情
+
+本次集中修复了考试结果0分及判分异常的多个问题，共涉及 5 个独立 bug，横跨后端、PC 管理端、移动端三层：
+
+**Bug 1 - 答案格式不匹配导致0分**：移动端交卷时前端提交的 answers 是数组格式 `[{questionId:123, answer:"A"}]`，但后端 `parseAnswers` 用 `Map<String,String>` 反序列化，Jackson 解析失败后 catch 返回空 Map，所有题目 `userAnswer=null` → 全部判错0分。修复为前端提交 Map 格式 `{"123":"A"}`。
+
+**Bug 2 - 判断题答案未归一化**：数据库判断题 `answer='false'`（小写字符串），前端提交 `'F'`。`'F'.equalsIgnoreCase('false')` 因长度不同返回 false，导致答对被判错。修复为后端新增 `normalizeJudgeAnswer` 方法，将 true/false/T/F/正确/错误/对/错 统一转为 T/F 后再比较。
+
+**Bug 3 - 多选题脏数据判错**：管理端试题编辑页 `handleEdit` 用 `split(',')` 拆分 answer，但 init.sql 里多选题 answer 是 `"ABCD"`（无分隔符），拆分得到 `["ABCD"]`（一个元素）不匹配 checkbox，编辑保存后 answer 变成 `"ABCD,A,B,C,D"`（畸形数据）。`sortAnswer("ABCD,A,B,C,D")` 排序后得到 `"AABBCCDD"`，与用户提交的 `"ABCD"` 不匹配，判错。修复方案：① 后端 `sortAnswer` 改用 TreeSet 去重只保留 A-Z 字母；② 前端 `handleEdit` 用正则 `match(/[A-Za-z]/g)` 提取字母；③ 前端 `handleSubmit` 多选题用 `join('')` 无分隔符；④ 数据库脏数据已清理（第4、9题 answer 从 `"ABCD,A,B,C,D"` 修正为 `"ABCD"`）。
+
+**Bug 4 - 结果页字段名不匹配**：后端 `ExamResultVo` 返回 `answerDetails` 字段，但移动端结果页读的是 `result.answers || result.details`，字段名不匹配导致答题统计全0。同时后端 answerDetails 里 `questionType` 是数字（1/2/3/4），前端 `getTypeText` 期望字符串（single/multiple/judge/essay）。修复为前端读取 `answerDetails` 字段并做题型映射、选项构建、多选答案转换。
+
+**Bug 5 - 管理端试题选择弹窗不加载数据**：`ExamEdit.vue` 点击"添加试题"按钮只设 `questionSelectVisible=true`，没有调用 `loadQuestions()`，弹窗打开时显示"暂无数据"。修复为 el-dialog 添加 `@open="loadQuestions"`，弹窗打开时自动加载试题列表。
+
+**涉及文件**：
+- `smart-nursing-backend/src/main/java/com/smart/nursing/service/impl/ExamRecordServiceImpl.java` - 答案归一化、判分日志、多选去重、answerDetails 补充选项字段
+- `smart-nursing-mobile/src/pages/exam/exam-paper.vue` - 答案格式从数组改为 Map
+- `smart-nursing-mobile/src/pages/exam/exam-result.vue` - 字段名映射、题型转换、判断题归一化显示、多选选项状态增强
+- `smart-nursing-admin/src/views/exam/ExamEdit.vue` - 试题选择弹窗 @open 加载
+- `smart-nursing-admin/src/views/exam/QuestionBank.vue` - 多选题答案拆分和拼接修复
+
+### 数据库调整（7/21 测试期间）
+
+测试过程中清理了 `nursing_question` 表中多选题的脏数据：将第4、9题的 `answer` 字段从 `"ABCD,A,B,C,D"` 修正为 `"ABCD"`，与 init.sql 原始格式一致。这不是代码变更，但如果重新初始化数据库需要注意。
 
 ### 代码提交状态
 
@@ -433,6 +460,30 @@ Get-NetTCPConnection -LocalPort 8888 -State Listen | ForEach-Object { Stop-Proce
 
 **教训**：**所有调用 `uni.showModal` 的按钮事件都要加防重复点击锁**。用一个 ref 标志位（如 `isStarting`/`isConfirming`），进入流程时置 `true`，在 modal 的 `success`（无论确认还是取消）和 `fail` 回调中释放锁。确认后的业务流程结束后也要延迟释放锁（如 `setTimeout(() => { isStarting.value = false }, 500)`），避免导航后立即重复触发。
 
+### 7.19 考试答案必须用 Map 格式提交，不能用数组
+
+**现象**：移动端交卷后考试结果0分，所有题目都判错，但用户明明选了正确答案。
+
+**根因**：移动端 `exam-paper.vue` 提交的 answers 是数组格式 `[{questionId:123, answer:"A"}]`，但后端 `parseAnswers` 用 `objectMapper.readValue(answers, new TypeReference<Map<String, String>>() {})` 反序列化为 `Map<String,String>`。Jackson 无法将 JSON 数组反序列化为 Map，抛异常后被 catch，返回空 Map，导致所有题目 `userAnswer=null`，全部判错0分。
+
+**教训**：前后端答案格式必须严格对齐。后端 `parseAnswers` 期望 `{"questionId": "userAnswer"}` 的 Map 格式，前端必须提交 Map 而非数组。格式不匹配时 Jackson 静默失败（catch 后返回空 Map），不会抛出可见错误，极易被忽略。
+
+### 7.20 判断题答案必须归一化后比较
+
+**现象**：判断题用户选了"错误"，正确答案也是"错误"，但被判错0分。
+
+**根因**：数据库判断题 `answer` 字段值可能是 `'false'`、`'错'`、`'F'` 等多种格式，前端提交的是 `'F'`。`'F'.equalsIgnoreCase('false')` 因字符串长度不同（1 vs 5）返回 false，`'F'.equalsIgnoreCase('错')` 也返回 false。表面看用户答案和正确答案都是"错误"，但实际比较的字符串值不同。
+
+**教训**：判断题答案比较前必须做归一化。本项目新增 `normalizeJudgeAnswer` 方法，将 true/false/T/F/正确/错误/对/错 统一转为 T/F 后再用 `equalsIgnoreCase` 比较。前端显示也必须归一化（`formatJudgeText`），否则会出现"正确答案:错误，你的答案:错误"但被判错的迷惑性表现。
+
+### 7.21 多选题答案格式必须统一，编辑页拆分要兼容
+
+**现象**：多选题用户全选 ABCD，正确答案也是 ABCD，但被判错0分。后端日志显示 `correctAnswer=[ABCD,A,B,C,D]`（畸形数据）。
+
+**根因**：管理端试题编辑页 `QuestionBank.vue` 的 `handleEdit` 用 `row.answer.split(',')` 拆分多选题答案。但 init.sql 里多选题 answer 是 `"ABCD"`（无分隔符），`split(',')` 得到 `["ABCD"]`（一个元素），不匹配任何 checkbox（value 是单字母 A/B/C/D），所以编辑时 checkbox 全部未选中。用户重新勾选后，旧的 `"ABCD"` 未清除 + 新勾选的 A/B/C/D，`answerList` 变成 `["ABCD","A","B","C","D"]`，`join(',')` = `"ABCD,A,B,C,D"`（畸形数据）。后端 `sortAnswer` 对 `"ABCD,A,B,C,D"` 排序得到 `"AABBCCDD"`，与用户提交的 `"ABCD"` 不匹配，判错。
+
+**教训**：① 多选题 answer 格式必须全项目统一（推荐无分隔符 `"ABCD"`）；② 编辑页拆分答案不能用简单 `split(',')`，要用正则 `match(/[A-Za-z]/g)` 提取字母，兼容各种格式；③ 后端 `sortAnswer` 要做防御性处理（去重、只保留字母），即使数据库有脏数据也能正确判分；④ 保存时用 `join('')` 无分隔符，与 init.sql 格式一致。
+
 ---
 
 ## 8 关键文件清单
@@ -490,9 +541,17 @@ Get-NetTCPConnection -LocalPort 8888 -State Listen | ForEach-Object { Stop-Proce
 - 前端请求必须加 `/api` 前缀，Vite 代理重写时去掉 `/api`
 - 登录接口：`POST /api/login?username=admin&password=123456`，参数在 URL 查询串中
 - 收藏操作需要 `contentType` + `contentId` 两个参数
-- 考试提交用 URL 编码的查询参数，answers 为 JSON 字符串
+- 考试提交用 URL 编码的查询参数，answers 为 JSON 字符串，格式必须是 `{"questionId":"userAnswer"}` 的 Map（**不能是数组**）
 - 学习进度上报用查询参数，包含 `contentType` 和 `studyDuration`
 - **Long 类型 ID 序列化为 String**：通过 `JacksonConfig` 全局处理，前端收到的所有 ID 都是字符串
+
+### 考试判分约定
+
+- **答案格式**：前端提交的 answers JSON 必须是 `{"questionId":"userAnswer"}` 的 Map 格式，后端 `parseAnswers` 用 `Map<String,String>` 反序列化
+- **判断题归一化**：数据库 answer 可能是 true/false/T/F/正确/错误/对/错，后端 `normalizeJudgeAnswer` 统一转为 T/F 后比较，前端 `formatJudgeText` 统一显示
+- **多选题格式**：answer 字段统一用无分隔符格式（如 `"ABCD"`），编辑页用正则提取字母，保存用 `join('')`，后端 `sortAnswer` 用 TreeSet 去重只保留 A-Z
+- **结果页字段对齐**：后端 `ExamResultVo.answerDetails` 返回答题详情，前端读取 `answerDetails` 字段（不是 `answers`/`details`）；`questionType` 是数字需映射为字符串（1→single, 2→multiple, 3→judge, 4→essay）
+- **answerDetails 必须包含选项**：后端构建 answerDetails 时要补充 `optionA/B/C/D` 字段，供前端结果页渲染选项
 
 ### 内容类型映射
 

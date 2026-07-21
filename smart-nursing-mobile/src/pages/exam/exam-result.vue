@@ -127,14 +127,16 @@
                 class="answer-option"
                 :class="{
                   'option-correct': isCorrectOption(item, option.key),
-                  'option-wrong': isWrongOption(item, option.key),
-                  'option-selected': isUserSelected(item, option.key)
+                  'option-wrong': isUserSelected(item, option.key) && !isCorrectOption(item, option.key),
+                  'option-missed': isCorrectOption(item, option.key) && !isUserSelected(item, option.key) && !item.isCorrect
                 }"
               >
                 <text class="option-label">{{ option.key }}</text>
                 <text class="option-text">{{ option.value }}</text>
                 <text v-if="isCorrectOption(item, option.key)" class="option-tag tag-correct">正确答案</text>
-                <text v-if="isWrongOption(item, option.key)" class="option-tag tag-wrong">你的选择</text>
+                <text v-if="isUserSelected(item, option.key) && isCorrectOption(item, option.key)" class="option-tag tag-selected">✓ 已选</text>
+                <text v-if="isUserSelected(item, option.key) && !isCorrectOption(item, option.key)" class="option-tag tag-wrong">你的选择</text>
+                <text v-if="isCorrectOption(item, option.key) && !isUserSelected(item, option.key) && !item.isCorrect" class="option-tag tag-missed">未选</text>
               </view>
             </view>
 
@@ -142,12 +144,12 @@
             <view v-else-if="item.type === 'judge'" class="judge-answer">
               <view class="judge-row">
                 <text class="judge-label">正确答案：</text>
-                <text class="judge-value judge-correct">{{ item.correctAnswer === 'T' ? '正确' : '错误' }}</text>
+                <text class="judge-value judge-correct">{{ formatJudgeText(item.correctAnswer) }}</text>
               </view>
               <view class="judge-row">
                 <text class="judge-label">你的答案：</text>
                 <text class="judge-value" :class="item.isCorrect ? 'judge-correct' : 'judge-wrong'">
-                  {{ item.userAnswer === 'T' ? '正确' : item.userAnswer === 'F' ? '错误' : '未作答' }}
+                  {{ formatJudgeText(item.userAnswer) }}
                 </text>
               </view>
             </view>
@@ -194,9 +196,41 @@ const isPassed = computed(() => {
   return (result.value.score || 0) >= (result.value.passScore || 60)
 })
 
+// 后端 questionType 数字映射到前端类型字符串
+const typeNumMap = { 1: 'single', 2: 'multiple', 3: 'judge', 4: 'essay' }
+
+// 将多选答案字符串拆分为数组
+const splitAnswer = (ans) => {
+  if (!ans) return []
+  return ans.split('').filter(s => s.trim())
+}
+
 const answers = computed(() => {
   if (!result.value) return []
-  return result.value.answers || result.value.details || []
+  // 后端返回字段名为 answerDetails
+  const list = result.value.answerDetails || result.value.answers || result.value.details || []
+  // 转换后端数据格式为前端期望的格式
+  return list.map(item => {
+    const type = typeNumMap[item.questionType] || 'single'
+    // 从 optionA/B/C/D 构建选项列表
+    const options = []
+    if (item.optionA) options.push({ key: 'A', value: item.optionA })
+    if (item.optionB) options.push({ key: 'B', value: item.optionB })
+    if (item.optionC) options.push({ key: 'C', value: item.optionC })
+    if (item.optionD) options.push({ key: 'D', value: item.optionD })
+    // 多选题的 correctAnswer/userAnswer 转为数组
+    const correctAnswer = type === 'multiple' ? splitAnswer(item.correctAnswer) : item.correctAnswer
+    const userAnswer = type === 'multiple' ? splitAnswer(item.userAnswer) : item.userAnswer
+    return {
+      ...item,
+      type,
+      title: item.content,
+      options,
+      correctAnswer,
+      userAnswer,
+      analysis: item.feedback
+    }
+  })
 })
 
 const filteredAnswers = computed(() => {
@@ -304,6 +338,18 @@ const formatDateTime = (time) => {
 const getTypeText = (type) => {
   const map = { single: '单选', multiple: '多选', judge: '判断' }
   return map[type] || '题目'
+}
+
+/**
+ * 判断题答案归一化显示
+ * 支持 true/false/T/F/正确/错误 格式
+ */
+const formatJudgeText = (answer) => {
+  if (!answer) return '未作答'
+  const a = String(answer).trim().toLowerCase()
+  if (a === 'true' || a === 't' || a === '正确' || a === '对') return '正确'
+  if (a === 'false' || a === 'f' || a === '错误' || a === '错') return '错误'
+  return '未作答'
 }
 
 /**
@@ -647,6 +693,11 @@ const goExamDetail = () => {
             border: 2rpx solid #f44336;
           }
 
+          &.option-missed {
+            background: #fff8e1;
+            border: 2rpx dashed #ff9800;
+          }
+
           .option-label {
             font-size: 26rpx;
             font-weight: bold;
@@ -667,6 +718,8 @@ const goExamDetail = () => {
 
             &.tag-correct { background: #4caf50; color: #fff; }
             &.tag-wrong { background: #f44336; color: #fff; }
+            &.tag-selected { background: #2979ff; color: #fff; }
+            &.tag-missed { background: #ff9800; color: #fff; }
           }
         }
       }

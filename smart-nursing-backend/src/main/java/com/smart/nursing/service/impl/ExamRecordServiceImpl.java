@@ -93,6 +93,7 @@ public class ExamRecordServiceImpl extends ServiceImpl<ExamRecordMapper, ExamRec
 
             // 6. 解析用户答案 JSON: { "questionId": "userAnswer", ... }
             Map<String, String> userAnswerMap = parseAnswers(answers);
+            log.info("交卷解析: examId={}, userId={}, answers原文=[{}], 解析后Map={}", examId, userId, answers, userAnswerMap);
 
             // 7. 自动判分（客观题精确判分，解答题AI评分）
             int totalScore = 0;
@@ -106,6 +107,10 @@ public class ExamRecordServiceImpl extends ServiceImpl<ExamRecordMapper, ExamRec
                 detail.put("questionId", question.getQuestionId());
                 detail.put("questionType", question.getQuestionType());
                 detail.put("content", question.getContent());
+                detail.put("optionA", question.getOptionA());
+                detail.put("optionB", question.getOptionB());
+                detail.put("optionC", question.getOptionC());
+                detail.put("optionD", question.getOptionD());
                 detail.put("correctAnswer", question.getAnswer());
                 detail.put("userAnswer", userAnswer);
                 detail.put("isCorrect", scoreResult.isCorrect());
@@ -178,6 +183,10 @@ public class ExamRecordServiceImpl extends ServiceImpl<ExamRecordMapper, ExamRec
                 detail.put("questionId", question.getQuestionId());
                 detail.put("questionType", question.getQuestionType());
                 detail.put("content", question.getContent());
+                detail.put("optionA", question.getOptionA());
+                detail.put("optionB", question.getOptionB());
+                detail.put("optionC", question.getOptionC());
+                detail.put("optionD", question.getOptionD());
                 detail.put("correctAnswer", question.getAnswer());
                 detail.put("userAnswer", userAnswer);
                 detail.put("isCorrect", scoreResult.isCorrect());
@@ -296,15 +305,26 @@ public class ExamRecordServiceImpl extends ServiceImpl<ExamRecordMapper, ExamRec
             return result;
         }
 
+        // 判断题答案归一化：统一将 true/false/T/F/正确/错误 转为 T/F
+        String correctAnswer = question.getAnswer();
+        String compareAnswer = userAnswer;
+        if (questionType == 3) {
+            correctAnswer = normalizeJudgeAnswer(correctAnswer);
+            compareAnswer = normalizeJudgeAnswer(compareAnswer);
+        }
+
+        log.info("判分详情: questionId={}, questionType={}, correctAnswer=[{}], userAnswer=[{}], normalizedCorrect=[{}], normalizedUser=[{}]",
+                question.getQuestionId(), questionType, question.getAnswer(), userAnswer, correctAnswer, compareAnswer);
+
         switch (questionType) {
             case 1: // 单选
             case 3: // 判断
-                boolean correctExact = checkExactAnswer(question.getAnswer(), userAnswer);
+                boolean correctExact = checkExactAnswer(correctAnswer, compareAnswer);
                 result.setCorrect(correctExact);
                 result.setEarnedScore(correctExact ? fullScore : 0);
                 break;
             case 2: // 多选：排序后比较
-                boolean correctMulti = checkMultiAnswer(question.getAnswer(), userAnswer);
+                boolean correctMulti = checkMultiAnswer(correctAnswer, compareAnswer);
                 result.setCorrect(correctMulti);
                 result.setEarnedScore(correctMulti ? fullScore : 0);
                 break;
@@ -319,7 +339,29 @@ public class ExamRecordServiceImpl extends ServiceImpl<ExamRecordMapper, ExamRec
             default:
                 break;
         }
+        log.info("判分结果: questionId={}, isCorrect={}, earnedScore={}", question.getQuestionId(), result.isCorrect(), result.getEarnedScore());
         return result;
+    }
+
+    /**
+     * 判断题答案归一化
+     * 将 true/false/T/F/正确/错误/对/错 统一转为 T 或 F
+     *
+     * @param answer 原始答案
+     * @return 归一化后的答案（T 或 F），无法识别时返回原值大写
+     */
+    private String normalizeJudgeAnswer(String answer) {
+        if (answer == null || answer.isEmpty()) {
+            return answer;
+        }
+        String trimmed = answer.trim().toLowerCase();
+        if ("true".equals(trimmed) || "t".equals(trimmed) || "正确".equals(trimmed) || "对".equals(trimmed)) {
+            return "T";
+        }
+        if ("false".equals(trimmed) || "f".equals(trimmed) || "错误".equals(trimmed) || "错".equals(trimmed)) {
+            return "F";
+        }
+        return trimmed.toUpperCase();
     }
 
     /**
@@ -344,11 +386,21 @@ public class ExamRecordServiceImpl extends ServiceImpl<ExamRecordMapper, ExamRec
 
     /**
      * 对多选答案排序（按字母顺序）
+     * 容忍各种格式：只提取 A-Z 字母，去重后排序
+     * 例如 "ABCD,A,B,C,D" 和 "ABCD" 都会归一化为 "ABCD"
      */
     private String sortAnswer(String answer) {
-        char[] chars = answer.trim().toCharArray();
-        Arrays.sort(chars);
-        return new String(chars).toUpperCase();
+        Set<Character> set = new TreeSet<>();
+        for (char c : answer.trim().toCharArray()) {
+            if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')) {
+                set.add(Character.toUpperCase(c));
+            }
+        }
+        StringBuilder sb = new StringBuilder();
+        for (char c : set) {
+            sb.append(c);
+        }
+        return sb.toString();
     }
 
     /**

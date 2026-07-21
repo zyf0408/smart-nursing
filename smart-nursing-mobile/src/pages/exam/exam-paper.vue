@@ -469,10 +469,12 @@ const handleSubmit = async (isAuto = false) => {
 
   try {
     // 构建答案数据: 后端 @RequestParam String answers，传 JSON 字符串
-    const answers = questions.value.map(q => ({
-      questionId: q.id,
-      answer: Array.isArray(userAnswers[q.id]) ? userAnswers[q.id].join('') : userAnswers[q.id]
-    }))
+    // 后端 parseAnswers 期望 Map<String,String> 格式: {"questionId": "userAnswer", ...}
+    const answers = {}
+    questions.value.forEach(q => {
+      const ans = Array.isArray(userAnswers[q.id]) ? userAnswers[q.id].join('') : userAnswers[q.id]
+      answers[q.id] = ans || ''
+    })
 
     const res = await examApi.submitExam(examId.value, JSON.stringify(answers))
 

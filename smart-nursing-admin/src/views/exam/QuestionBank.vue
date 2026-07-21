@@ -249,7 +249,8 @@ const handleEdit = (row) => {
   Object.assign(form, {
     ...row,
     options: options.length > 0 ? options : [{ content: '' }, { content: '' }],
-    answerList: row.answer ? row.answer.split(',') : []
+    // 多选题答案按字母拆分（兼容 "ABCD"、"A,B,C,D" 等格式），统一为单字母数组
+    answerList: row.answer ? (row.answer.match(/[A-Za-z]/g) || []).map(s => s.toUpperCase()) : []
   })
   dialogVisible.value = true
 }
@@ -258,9 +259,9 @@ const handleSubmit = () => {
   formRef.value.validate((valid) => {
     if (!valid) return
     const submitData = { ...form }
-    // 多选题答案处理
+    // 多选题答案处理：用 join('') 无分隔符拼接，与 init.sql 格式一致（如 "ABCD"）
     if (form.questionType === 2) {
-      submitData.answer = form.answerList.join(',')
+      submitData.answer = (form.answerList || []).join('')
     }
     // 将 options 数组映射为 optionA/B/C/D（仅单选/多选）
     if ((form.questionType === 1 || form.questionType === 2) && form.options && form.options.length > 0) {

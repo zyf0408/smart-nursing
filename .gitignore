@@ -41,3 +41,4 @@ unpackage/
 *.tmp
 *.bak
 *.cache
+.trae-html-share-packages/

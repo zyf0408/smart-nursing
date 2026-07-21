@@ -84,7 +84,7 @@
     </div>
 
     <!-- 试题选择弹窗 -->
-    <el-dialog v-model="questionSelectVisible" title="选择试题" width="800px">
+    <el-dialog v-model="questionSelectVisible" title="选择试题" width="800px" @open="loadQuestions">
       <div class="search-bar">
         <el-input v-model="questionParams.content" placeholder="题目内容" clearable style="width: 200px" @keyup.enter="loadQuestions" />
         <el-select v-model="questionParams.questionType" placeholder="题型" clearable style="width: 120px">
